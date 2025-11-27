@@ -1,4 +1,4 @@
-package http
+package handler
 
 type CreateSubscriptionRequest struct {
 	ServiceName string `json:"service_name"`
