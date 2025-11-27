@@ -16,7 +16,7 @@ type SummaryFilter struct {
 	FromMonth   int
 	FromYear    int
 	ToMonth     int
-	toYear      int
+	ToYear      int
 }
 
 type SubscriptionRepository interface {
