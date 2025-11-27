@@ -6,8 +6,8 @@ import (
 )
 
 type SubscriptionFilter struct {
-	UserID  *string
-	Service *string
+	UserID      *string
+	ServiceName *string
 }
 
 type SummaryFilter struct {
