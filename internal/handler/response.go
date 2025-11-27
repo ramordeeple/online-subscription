@@ -1,4 +1,4 @@
-package http
+package handler
 
 type SubscriptionResponse struct {
 	ID          string `json:"id"`
