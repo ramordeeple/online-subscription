@@ -42,3 +42,7 @@ func (uc *SubscriptionUseCase) List(ctx context.Context, f *model.SubscriptionFi
 func (uc *SubscriptionUseCase) Sum(ctx context.Context, f *model.SummaryFilter) (int, error) {
 	return uc.repo.Sum(ctx, f)
 }
+
+func NewSubscriptionUseCase(repo repository.SubscriptionRepository) *SubscriptionUseCase {
+	return &SubscriptionUseCase{repo: repo}
+}
