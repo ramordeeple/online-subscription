@@ -123,21 +123,30 @@ func (r *SubscriptionRepo) List(ctx context.Context, f *model.SubscriptionFilter
 
 func (r *SubscriptionRepo) Sum(ctx context.Context, f *model.SummaryFilter) (int, error) {
 	query := `
-		SELECT SUM(price) 
+		SELECT COALESCE(SUM(price), 0)
 		FROM subscriptions
-		WHERE (start_year*12 + start_month) <= ($1*12 + $2)
+		WHERE (start_year*12 + start_month) >= ($1*12 + $2)
 	`
+	args := []any{f.FromYear, f.FromMonth}
+	i := 3
 
-	var sum sql.NullInt64
+	if f.UserID != nil {
+		query += fmt.Sprintf(" AND user_id = $%d", i)
+		args = append(args, *f.UserID)
+		i++
+	}
 
-	err := r.db.QueryRowContext(ctx, query).Scan(&sum)
+	if f.ServiceName != nil {
+		query += fmt.Sprintf(" AND service_name = $%d", i)
+		args = append(args, *f.ServiceName)
+		i++
+	}
+
+	var sum int
+	err := r.db.QueryRowContext(ctx, query, args...).Scan(&sum)
 	if err != nil {
 		return 0, err
 	}
 
-	if !sum.Valid {
-		return 0, nil
-	}
-
-	return int(sum.Int64), nil
+	return sum, nil
 }
