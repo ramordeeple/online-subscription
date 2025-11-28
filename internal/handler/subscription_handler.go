@@ -42,9 +42,16 @@ func (h *SubscriptionHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var userID string
+	if req.UserID != nil && *req.UserID != "" {
+		userID = *req.UserID
+	} else {
+		userID = uuid.New().String()
+	}
+
 	sub := &model.Subscription{
 		ID:          uuid.New().String(),
-		UserID:      uuid.New().String(),
+		UserID:      userID,
 		ServiceName: req.ServiceName,
 		Price:       req.Price,
 		StartMonth:  startMonth,
@@ -97,11 +104,16 @@ func (h *SubscriptionHandler) Delete(w http.ResponseWriter, r *http.Request, id 
 }
 
 func (h *SubscriptionHandler) Summary(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
 	from := r.URL.Query().Get("from")
 
 	fromMonth, fromYear, err := parseDate(from)
 	if err != nil {
-		http.Error(w, "invalid to date", http.StatusBadRequest)
+		http.Error(w, "invalid from date", http.StatusBadRequest)
 		return
 	}
 
@@ -123,9 +135,9 @@ func (h *SubscriptionHandler) Summary(w http.ResponseWriter, r *http.Request) {
 
 func parseDate(str string) (int, int, error) {
 	str = strings.TrimSpace(str)
-	t, err := time.Parse("2006-01", str)
+	t, err := time.Parse("01-2006", str)
 	if err != nil {
-		return 0, 0, fmt.Errorf("invalid date format, expected YYYY-MM")
+		return 0, 0, fmt.Errorf("invalid date format, expected MM-YYYY-MM")
 	}
 	return int(t.Month()), t.Year(), nil
 }
