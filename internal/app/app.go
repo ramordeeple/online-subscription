@@ -29,9 +29,7 @@ func Start() *App {
 	}
 
 	repo := postgres.NewSubscriptionRepo(db)
-
 	uc := usecase.NewSubscriptionUseCase(repo)
-
 	h := handler.NewSubscriptionHandler(uc)
 
 	router := NewRouter(h)
