@@ -9,6 +9,14 @@ import (
 func NewRouter(h *handler.SubscriptionHandler) *http.ServeMux {
 	mux := http.NewServeMux()
 
+	mux.HandleFunc("/subscriptions/summary", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		h.Summary(w, r)
+	})
+
 	mux.HandleFunc("/subscriptions", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
@@ -21,7 +29,7 @@ func NewRouter(h *handler.SubscriptionHandler) *http.ServeMux {
 	})
 
 	mux.HandleFunc("/subscriptions/", func(w http.ResponseWriter, r *http.Request) {
-		id := strings.TrimPrefix(r.URL.Path, "subscriptions/")
+		id := strings.TrimPrefix(r.URL.Path, "/subscriptions/")
 		if id == "" {
 			http.Error(w, "id is required", http.StatusBadRequest)
 			return
@@ -35,14 +43,6 @@ func NewRouter(h *handler.SubscriptionHandler) *http.ServeMux {
 		default:
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		}
-	})
-
-	mux.HandleFunc("/subscriptions/summary", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodGet {
-			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
-		h.Summary(w, r)
 	})
 
 	return mux
