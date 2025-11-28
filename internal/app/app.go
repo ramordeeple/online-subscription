@@ -2,8 +2,8 @@ package app
 
 import (
 	"database/sql"
-	"log"
 	"net/http"
+	"os"
 
 	"online-subscription/internal/config"
 	"online-subscription/internal/handler"
@@ -12,6 +12,7 @@ import (
 	"online-subscription/internal/usecase"
 
 	_ "github.com/lib/pq"
+	"go.uber.org/zap"
 )
 
 type App struct {
@@ -21,17 +22,20 @@ type App struct {
 func Start() *App {
 	cfg := config.LoadConfig("config.yaml")
 
-	logg := logger.New()
+	if err := logger.Init(); err != nil {
+		panic(err)
+	}
+	defer logger.Sync()
 
 	db, err := sql.Open("postgres", cfg.DSN())
 	if err != nil {
-		log.Fatal("failed to connect to db:", err)
+		logger.Error("Failed to connect to DB", zap.Error(err))
+		os.Exit(1)
 	}
 
 	repo := postgres.NewSubscriptionRepo(db)
 	uc := usecase.NewSubscriptionUseCase(repo)
 	h := handler.NewSubscriptionHandler(uc)
-
 	router := NewRouter(h)
 
 	srv := &http.Server{
@@ -39,7 +43,7 @@ func Start() *App {
 		Handler: router,
 	}
 
-	logg.Info("Starting server on port " + cfg.App.Port)
+	logger.Info("Starting server", zap.String("port", cfg.App.Port))
 
 	return &App{Server: srv}
 }

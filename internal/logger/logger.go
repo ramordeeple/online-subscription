@@ -1,8 +1,35 @@
 package logger
 
-import "go.uber.org/zap"
+import (
+	"go.uber.org/zap"
+)
 
-func New() *zap.Logger {
-	logger, _ := zap.NewDevelopment()
-	return logger
+var log *zap.Logger
+
+func Init() error {
+	var err error
+	log, err = zap.NewDevelopment() // можно zap.NewProduction() для продакшена
+	return err
+}
+
+func Info(msg string, args ...zap.Field) {
+	if log != nil {
+		log.Info(msg, args...)
+	}
+}
+
+func Error(msg string, args ...zap.Field) {
+	if log != nil {
+		log.Error(msg, args...)
+	}
+}
+
+func Get() *zap.Logger {
+	return log
+}
+
+func Sync() {
+	if log != nil {
+		_ = log.Sync()
+	}
 }
