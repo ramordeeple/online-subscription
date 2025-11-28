@@ -2,10 +2,16 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"online-subscription/internal/handler/dto"
 	"online-subscription/internal/model"
 	"online-subscription/internal/usecase"
+	"strings"
 	"time"
+
+	"github.com/google/uuid"
+	_ "github.com/lib/pq"
 )
 
 type SubscriptionHandler struct {
@@ -23,18 +29,34 @@ func writeJSON(w http.ResponseWriter, status int, data any) {
 }
 
 func (h *SubscriptionHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var s model.Subscription
-	if err := json.NewDecoder(r.Body).Decode(&s); err != nil {
+	var req dto.CreateSubscriptionRequest
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	if err := h.uc.Create(r.Context(), &s); err != nil {
+	startMonth, startYear, err := parseDate(req.StartDate)
+	if err != nil {
+		http.Error(w, "invalid start_date format, expected YYYY-MM", http.StatusBadRequest)
+		return
+	}
+
+	sub := &model.Subscription{
+		ID:          uuid.New().String(),
+		UserID:      uuid.New().String(),
+		ServiceName: req.ServiceName,
+		Price:       req.Price,
+		StartMonth:  startMonth,
+		StartYear:   startYear,
+	}
+
+	if err := h.uc.Create(r.Context(), sub); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, s)
+	writeJSON(w, http.StatusCreated, sub)
 }
 
 func (h *SubscriptionHandler) List(w http.ResponseWriter, r *http.Request) {
@@ -76,15 +98,8 @@ func (h *SubscriptionHandler) Delete(w http.ResponseWriter, r *http.Request, id 
 
 func (h *SubscriptionHandler) Summary(w http.ResponseWriter, r *http.Request) {
 	from := r.URL.Query().Get("from")
-	to := r.URL.Query().Get("to")
 
 	fromMonth, fromYear, err := parseDate(from)
-	if err != nil {
-		http.Error(w, "invalid to date", http.StatusBadRequest)
-		return
-	}
-
-	toMonth, toYear, err := parseDate(to)
 	if err != nil {
 		http.Error(w, "invalid to date", http.StatusBadRequest)
 		return
@@ -93,8 +108,6 @@ func (h *SubscriptionHandler) Summary(w http.ResponseWriter, r *http.Request) {
 	f := model.SummaryFilter{
 		FromMonth:   fromMonth,
 		FromYear:    fromYear,
-		ToMonth:     toMonth,
-		ToYear:      toYear,
 		UserID:      ptrString(r.URL.Query().Get("user_id")),
 		ServiceName: ptrString(r.URL.Query().Get("service_name")),
 	}
@@ -109,9 +122,10 @@ func (h *SubscriptionHandler) Summary(w http.ResponseWriter, r *http.Request) {
 }
 
 func parseDate(str string) (int, int, error) {
-	t, err := time.Parse("01-2006", str)
+	str = strings.TrimSpace(str)
+	t, err := time.Parse("2006-01", str)
 	if err != nil {
-		return 0, 0, err
+		return 0, 0, fmt.Errorf("invalid date format, expected YYYY-MM")
 	}
 	return int(t.Month()), t.Year(), nil
 }
