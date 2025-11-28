@@ -1,0 +1,14 @@
+services:
+  db:
+    image: postgres:16
+    command: ["postgres", "-c", "port=5435"]
+    environment:
+      POSTGRES_DB: subscriptions
+      POSTGRES_USER: subscription
+      POSTGRES_PASSWORD: 123
+    ports:
+      - "5435:5435"
+    volumes:
+      - subscriptions_pg:/var/lib/postgresql/data
+volumes:
+  subscriptions_pg:
