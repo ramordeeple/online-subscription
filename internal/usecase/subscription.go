@@ -3,9 +3,10 @@ package usecase
 import (
 	"context"
 	"errors"
-	"github.com/google/uuid"
 	"online-subscription/internal/model"
 	"online-subscription/internal/repository"
+
+	"github.com/google/uuid"
 )
 
 type SubscriptionUseCase struct {
@@ -34,10 +35,10 @@ func (uc *SubscriptionUseCase) Delete(ctx context.Context, id string) error {
 	return uc.repo.Delete(ctx, id)
 }
 
-func (uc *SubscriptionUseCase) List(ctx context.Context, f *repository.SubscriptionFilter) ([]*model.Subscription, error) {
+func (uc *SubscriptionUseCase) List(ctx context.Context, f *model.SubscriptionFilter) ([]*model.Subscription, error) {
 	return uc.repo.List(ctx, f)
 }
 
-func (uc *SubscriptionUseCase) Sum(ctx context.Context, f *repository.SummaryFilter) (int, error) {
+func (uc *SubscriptionUseCase) Sum(ctx context.Context, f *model.SummaryFilter) (int, error) {
 	return uc.repo.Sum(ctx, f)
 }
