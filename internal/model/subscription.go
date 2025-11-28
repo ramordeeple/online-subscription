@@ -1,5 +1,19 @@
 package model
 
+type SubscriptionFilter struct {
+	UserID      *string
+	ServiceName *string
+}
+
+type SummaryFilter struct {
+	UserID      *string
+	ServiceName *string
+	FromMonth   int
+	FromYear    int
+	ToMonth     int
+	ToYear      int
+}
+
 type Subscription struct {
 	ID          string
 	ServiceName string
