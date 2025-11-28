@@ -1,0 +1,10 @@
+app:
+  port: "8080"
+
+db:
+  host: "postgres"
+  port: 5435
+  user: "postgres"
+  password: "123"
+  name: "subscriptions"
+  sslmode: "disable"
