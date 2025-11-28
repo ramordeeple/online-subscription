@@ -10,8 +10,6 @@ type SummaryFilter struct {
 	ServiceName *string
 	FromMonth   int
 	FromYear    int
-	ToMonth     int
-	ToYear      int
 }
 
 type Subscription struct {
@@ -21,6 +19,4 @@ type Subscription struct {
 	UserID      string
 	StartMonth  int
 	StartYear   int
-	EndMonth    *int
-	EndYear     *int
 }
