@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"online-subscription/internal/model"
-	"online-subscription/internal/repository"
 	"online-subscription/internal/usecase"
 	"time"
 )
@@ -39,7 +38,7 @@ func (h *SubscriptionHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *SubscriptionHandler) List(w http.ResponseWriter, r *http.Request) {
-	f := repository.SubscriptionFilter{
+	f := model.SubscriptionFilter{
 		UserID:      ptrString(r.URL.Query().Get("user_id")),
 		ServiceName: ptrString(r.URL.Query().Get("service_name")),
 	}
@@ -91,7 +90,7 @@ func (h *SubscriptionHandler) Summary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	f := repository.SummaryFilter{
+	f := model.SummaryFilter{
 		FromMonth:   fromMonth,
 		FromYear:    fromYear,
 		ToMonth:     toMonth,
