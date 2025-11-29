@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"online-subscription/internal/handler/dto"
+	"online-subscription/internal/logger"
 	"online-subscription/internal/model"
 	"online-subscription/internal/usecase"
 	"strings"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/google/uuid"
 	_ "github.com/lib/pq"
+	"go.uber.org/zap"
 )
 
 type SubscriptionHandler struct {
@@ -63,6 +65,12 @@ func (h *SubscriptionHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logger.Info("Subscription created",
+		zap.String("id", sub.ID),
+		zap.String("service", sub.ServiceName),
+		zap.String("user_id", sub.UserID),
+	)
+
 	writeJSON(w, http.StatusCreated, sub)
 }
 
@@ -78,6 +86,7 @@ func (h *SubscriptionHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logger.Info("Subscriptions listed", zap.Int("count", len(subs)))
 	writeJSON(w, http.StatusOK, subs)
 }
 
@@ -91,6 +100,7 @@ func (h *SubscriptionHandler) GetById(w http.ResponseWriter, r *http.Request, id
 		http.Error(w, "Subscription not found", http.StatusNotFound)
 	}
 
+	logger.Info("Subscription retrieved", zap.String("id", s.ID))
 	writeJSON(w, http.StatusOK, s)
 }
 
@@ -100,6 +110,7 @@ func (h *SubscriptionHandler) Delete(w http.ResponseWriter, r *http.Request, id 
 		return
 	}
 
+	logger.Info("Subscription deleted", zap.String("id", id))
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -126,10 +137,12 @@ func (h *SubscriptionHandler) Summary(w http.ResponseWriter, r *http.Request) {
 
 	sum, err := h.uc.Sum(r.Context(), &f)
 	if err != nil {
+		logger.Error("Failed to calculate summary", zap.Error(err))
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	logger.Info("Summary calculated", zap.Int("sum", sum))
 	writeJSON(w, http.StatusOK, map[string]int{"total": sum})
 }
 
