@@ -19,4 +19,6 @@ type Subscription struct {
 	UserID      string
 	StartMonth  int
 	StartYear   int
+	EndMonth    *int
+	EndYear     *int
 }

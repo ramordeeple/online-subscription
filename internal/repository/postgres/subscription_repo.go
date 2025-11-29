@@ -21,11 +21,13 @@ func NewSubscriptionRepo(db *sql.DB) *SubscriptionRepo {
 func (r *SubscriptionRepo) Create(ctx context.Context, s *model.Subscription) error {
 	query := `
     INSERT INTO subscriptions (
-        id, service_name, price, user_id, start_month, start_year
-    ) VALUES ($1,$2,$3,$4,$5,$6)`
+        id, service_name, price, user_id, start_month, start_year, end_month, end_year
+    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+	`
 
 	_, err := r.db.ExecContext(ctx, query,
 		s.ID, s.ServiceName, s.Price, s.UserID, s.StartMonth, s.StartYear,
+		s.EndMonth, s.EndYear,
 	)
 
 	return err
@@ -33,9 +35,9 @@ func (r *SubscriptionRepo) Create(ctx context.Context, s *model.Subscription) er
 
 func (r *SubscriptionRepo) Get(ctx context.Context, id string) (*model.Subscription, error) {
 	query := `
-		SELECT id, service_name, price, user_id, start_month, start_year,
-		FROM subscriptions 
-		WHERE id=$1
+	SELECT id, service_name, price, user_id, start_month, start_year, end_month, end_year
+	FROM subscriptions 
+	WHERE id=$1
 	`
 
 	row := r.db.QueryRowContext(ctx, query, id)
@@ -43,7 +45,7 @@ func (r *SubscriptionRepo) Get(ctx context.Context, id string) (*model.Subscript
 	var s model.Subscription
 	err := row.Scan(
 		&s.ID, &s.ServiceName, &s.Price, &s.UserID,
-		&s.StartMonth, &s.StartYear,
+		&s.StartMonth, &s.StartYear, &s.EndMonth, &s.EndYear,
 	)
 
 	if errors.Is(err, sql.ErrNoRows) {
@@ -55,14 +57,19 @@ func (r *SubscriptionRepo) Get(ctx context.Context, id string) (*model.Subscript
 
 func (r *SubscriptionRepo) Update(ctx context.Context, s *model.Subscription) error {
 	query := `
-		UPDATE subscriptions
-		SET service_name=$1, price=$2, user_id=$3, start_month=$4, start_year=$5
-		WHERE id=$3
+	UPDATE subscriptions
+	SET service_name=$1, price=$2, user_id=$3, start_month=$4, start_year=$5, end_month=$6, end_year=$7
+	WHERE id=$8
 	`
 
 	_, err := r.db.ExecContext(ctx, query,
-		s.ServiceName, s.Price, s.UserID,
-		s.StartMonth, s.StartYear,
+		s.ServiceName,
+		s.Price,
+		s.UserID,
+		s.StartMonth,
+		s.StartYear,
+		s.EndMonth,
+		s.EndYear,
 		s.ID,
 	)
 
@@ -76,7 +83,7 @@ func (r *SubscriptionRepo) Delete(ctx context.Context, id string) error {
 
 func (r *SubscriptionRepo) List(ctx context.Context, f *model.SubscriptionFilter) ([]*model.Subscription, error) {
 	query := `
-		SELECT id, service_name, price, user_id, start_month, start_year
+		SELECT id, service_name, price, user_id, start_month, start_year, end_month, end_year
 		FROM subscriptions
 		WHERE 1=1
 	`
@@ -109,7 +116,7 @@ func (r *SubscriptionRepo) List(ctx context.Context, f *model.SubscriptionFilter
 
 		err := rows.Scan(
 			&s.ID, &s.ServiceName, &s.Price, &s.UserID,
-			&s.StartMonth, &s.StartYear,
+			&s.StartMonth, &s.StartYear, &s.EndMonth, &s.EndYear,
 		)
 		if err != nil {
 			return nil, err

@@ -5,4 +5,5 @@ type CreateSubscriptionRequest struct {
 	Price       int     `json:"price"`
 	StartDate   string  `json:"start_date"`
 	UserID      *string `json:"user_id,omitempty"`
+	EndDate     *string `json:"end_date"` // добавлено
 }
