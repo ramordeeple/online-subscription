@@ -1,15 +1,24 @@
 services:
-  db:
-    # Версия 16, т.к. пришлось сидеть на старой версии докера из за поддержки его API с GoLand
-    image: postgres:16
-    command: ["postgres", "-c", "port=5435"]
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
     environment:
-      POSTGRES_DB: subscriptions
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=subscription
+      - DB_PASSWORD=123
+      - DB_NAME=subscriptions
+      - DB_SSLMODE=disable
+
+  db:
+    # Версия 16, т.к. с latest работает последняя версия докера, а он не поддерживает свой API в GoLand
+    image: postgres:16
+    ports:
+      - "5435:5432"
+    environment:
       POSTGRES_USER: subscription
       POSTGRES_PASSWORD: 123
-    ports:
-      - "5435:5435"
-    volumes:
-      - subscriptions_pg:/var/lib/postgresql/data
-volumes:
-  subscriptions_pg:
+      POSTGRES_DB: subscriptions
