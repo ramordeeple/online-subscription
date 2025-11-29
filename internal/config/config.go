@@ -4,43 +4,42 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 
-	"gopkg.in/yaml.v3"
+	"github.com/joho/godotenv"
 )
 
 type Config struct {
-	App struct {
-		Port string `yaml:"port"`
-	} `yaml:"app"`
-	DB struct {
-		Host     string `yaml:"host"`
-		Port     int    `yaml:"port"`
-		User     string `yaml:"user"`
-		Password string `yaml:"password"`
-		Name     string `yaml:"name"`
-		SSLMode  string `yaml:"sslmode"`
-	} `yaml:"db"`
+	AppPort    string
+	DBHost     string
+	DBPort     int
+	DBUser     string
+	DBPassword string
+	DBName     string
+	DBSSLMode  string
+}
+
+func LoadConfig(path string) *Config {
+	if err := godotenv.Load(path); err != nil {
+		log.Printf("Warning: no .env file found at %s", path)
+	}
+
+	dbPort, _ := strconv.Atoi(os.Getenv("DB_PORT"))
+
+	return &Config{
+		AppPort:    os.Getenv("APP_PORT"),
+		DBHost:     os.Getenv("DB_HOST"),
+		DBPort:     dbPort,
+		DBUser:     os.Getenv("DB_USER"),
+		DBPassword: os.Getenv("DB_PASSWORD"),
+		DBName:     os.Getenv("DB_NAME"),
+		DBSSLMode:  os.Getenv("DB_SSLMODE"),
+	}
 }
 
 func (c *Config) DSN() string {
 	return fmt.Sprintf(
 		"host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
-		c.DB.Host, c.DB.Port, c.DB.User, c.DB.Password, c.DB.Name, c.DB.SSLMode,
+		c.DBHost, c.DBPort, c.DBUser, c.DBPassword, c.DBName, c.DBSSLMode,
 	)
-}
-
-func LoadConfig(path string) *Config {
-	file, err := os.Open(path)
-	if err != nil {
-		log.Fatalf("failed to open config file: %v", err)
-	}
-	defer file.Close()
-
-	var cfg Config
-	decoder := yaml.NewDecoder(file)
-	if err := decoder.Decode(&cfg); err != nil {
-		log.Fatalf("failed to parse config.yaml: %v", err)
-	}
-
-	return &cfg
 }

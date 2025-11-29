@@ -21,7 +21,7 @@ type App struct {
 }
 
 func Start() *App {
-	cfg := config.LoadConfig("config.yaml")
+	cfg := config.LoadConfig(".env")
 
 	if err := logger.Init(); err != nil {
 		panic(err)
@@ -42,14 +42,15 @@ func Start() *App {
 	repo := postgres.NewSubscriptionRepo(db)
 	uc := usecase.NewSubscriptionUseCase(repo)
 	h := handler.NewSubscriptionHandler(uc)
+
 	router := NewRouter(h)
 
 	srv := &http.Server{
-		Addr:    ":" + cfg.App.Port,
+		Addr:    ":" + cfg.AppPort,
 		Handler: router,
 	}
 
-	logger.Info("Starting server", zap.String("port", cfg.App.Port))
+	logger.Info("Starting server", zap.String("port", cfg.AppPort))
 
 	return &App{Server: srv}
 }
