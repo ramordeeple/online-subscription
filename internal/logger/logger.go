@@ -8,7 +8,7 @@ var log *zap.Logger
 
 func Init() error {
 	var err error
-	log, err = zap.NewDevelopment() // можно zap.NewProduction() для продакшена
+	log, err = zap.NewDevelopment()
 	return err
 }
 
@@ -22,10 +22,6 @@ func Error(msg string, args ...zap.Field) {
 	if log != nil {
 		log.Error(msg, args...)
 	}
-}
-
-func Get() *zap.Logger {
-	return log
 }
 
 func Sync() {
