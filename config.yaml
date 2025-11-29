@@ -2,8 +2,8 @@ app:
   port: "8080"
 
 db:
-  host: "localhost"
-  port: 5435
+  host: "db"
+  port: 5432
   user: "subscription"
   password: "123"
   name: "subscriptions"
