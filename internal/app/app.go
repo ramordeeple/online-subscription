@@ -1,9 +1,10 @@
 package app
 
 import (
-	"database/sql"
 	"net/http"
+	"online-subscription/internal/repository"
 	"os"
+	"time"
 
 	"online-subscription/internal/config"
 	"online-subscription/internal/handler"
@@ -27,9 +28,14 @@ func Start() *App {
 	}
 	defer logger.Sync()
 
-	db, err := sql.Open("postgres", cfg.DSN())
+	db, err := repository.ConnectWithRetry(cfg.DSN(), logger.Get(), 10, 2*time.Second)
 	if err != nil {
-		logger.Error("Failed to connect to DB", zap.Error(err))
+		logger.Error("Failed to connect to DB after retries", zap.Error(err))
+		os.Exit(1)
+	}
+
+	if err := repository.RunMigrations(db, "file:///app/migrations"); err != nil {
+		logger.Error("Failed to run migrations", zap.Error(err))
 		os.Exit(1)
 	}
 

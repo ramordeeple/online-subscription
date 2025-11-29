@@ -24,6 +24,10 @@ func Error(msg string, args ...zap.Field) {
 	}
 }
 
+func Get() *zap.Logger {
+	return log
+}
+
 func Sync() {
 	if log != nil {
 		_ = log.Sync()
