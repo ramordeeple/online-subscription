@@ -1,5 +1,6 @@
 services:
   db:
+    # Версия 16, т.к. пришлось сидеть на старой версии докера из за поддержки его API с GoLand
     image: postgres:16
     command: ["postgres", "-c", "port=5435"]
     environment:
