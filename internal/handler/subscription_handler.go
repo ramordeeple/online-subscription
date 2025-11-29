@@ -118,7 +118,13 @@ func (h *SubscriptionHandler) Summary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	logger.Info("Summary calculated", zap.Int("sum", sum))
+	logger.Info("Summary calculated",
+		zap.Int("sum", sum),
+		zap.String("user_id", safeString(f.UserID)),
+		zap.String("service_name", safeString(f.ServiceName)),
+		zap.String("from", fmt.Sprintf("%02d-%d", fromMonth, fromYear)),
+	)
+
 	writeJSON(w, http.StatusOK, map[string]int{"total": sum})
 }
 
@@ -133,6 +139,13 @@ func ptrString(s string) *string {
 		return nil
 	}
 	return &s
+}
+
+func safeString(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
 }
 
 func parseDate(str string) (int, int, error) {
