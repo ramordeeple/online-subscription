@@ -6,16 +6,17 @@ services:
     depends_on:
       - db
     environment:
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_USER=subscription
-      - DB_PASSWORD=123
-      - DB_NAME=subscriptions
-      - DB_SSLMODE=disable
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - DB_SSLMODE=${DB_SSLMODE}
+      - APP_PORT=${APP_PORT}
+
 
   db:
-    # Версия 16, т.к. с latest работает последняя версия докера, а он не поддерживает свой API в GoLand
-    image: postgres:16
+    image: postgres:latest
     ports:
       - "5435:5432"
     environment:

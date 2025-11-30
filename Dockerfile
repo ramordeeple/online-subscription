@@ -11,8 +11,7 @@ FROM alpine:latest
 WORKDIR /app
 
 COPY --from=builder /app/online-subscription .
-COPY --from=builder /app/config.yaml .
+COPY --from=builder /app/.env .
 COPY --from=builder /app/migrations /app/migrations
 
-EXPOSE 8081
 CMD ["./online-subscription"]
