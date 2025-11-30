@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	_ "online-subscription/docs"
 	"online-subscription/internal/app"
 )
 
