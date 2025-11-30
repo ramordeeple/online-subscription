@@ -59,7 +59,7 @@ func (h *SubscriptionHandler) Create(w http.ResponseWriter, r *http.Request) {
 		zap.String("user_id", sub.UserID),
 	)
 
-	writeJSON(w, http.StatusCreated, sub)
+	helpers.WriteJSON(w, http.StatusCreated, sub)
 }
 
 // List godoc
@@ -86,7 +86,7 @@ func (h *SubscriptionHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 
 	logger.Info("Subscriptions listed", zap.Int("count", len(subs)))
-	writeJSON(w, http.StatusOK, subs)
+	helpers.WriteJSON(w, http.StatusOK, subs)
 }
 
 // GetById godoc
@@ -111,7 +111,7 @@ func (h *SubscriptionHandler) GetById(w http.ResponseWriter, r *http.Request, id
 	}
 
 	logger.Info("Subscription retrieved", zap.String("id", s.ID))
-	writeJSON(w, http.StatusOK, s)
+	helpers.WriteJSON(w, http.StatusOK, s)
 }
 
 // Update godoc
@@ -186,7 +186,7 @@ func (h *SubscriptionHandler) Update(w http.ResponseWriter, r *http.Request, id 
 		zap.String("user_id", sub.UserID),
 	)
 
-	writeJSON(w, http.StatusOK, sub)
+	helpers.WriteJSON(w, http.StatusOK, sub)
 }
 
 // Delete godoc
@@ -279,11 +279,5 @@ func (h *SubscriptionHandler) Summary(w http.ResponseWriter, r *http.Request) {
 		}()),
 	)
 
-	writeJSON(w, http.StatusOK, map[string]int{"total": sum})
-}
-
-func writeJSON(w http.ResponseWriter, status int, data any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(data)
+	helpers.WriteJSON(w, http.StatusOK, map[string]int{"total": sum})
 }
