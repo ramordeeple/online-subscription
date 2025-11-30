@@ -1,3 +1,4 @@
+basePath: /
 definitions:
   dto.CreateSubscriptionRequest:
     properties:
@@ -33,6 +34,9 @@ definitions:
     type: object
 info:
   contact: {}
+  description: агреграция данных об онлайн-подписках пользователей
+  title: Online Subscriptions API service
+  version: "1.0"
 paths:
   /subscriptions:
     get:

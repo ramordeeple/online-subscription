@@ -1,8 +1,12 @@
 {
     "swagger": "2.0",
     "info": {
-        "contact": {}
+        "description": "агреграция данных об онлайн-подписках пользователей",
+        "title": "Online Subscriptions API service",
+        "contact": {},
+        "version": "1.0"
     },
+    "basePath": "/",
     "paths": {
         "/subscriptions": {
             "get": {
