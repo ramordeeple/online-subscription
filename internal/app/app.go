@@ -2,15 +2,14 @@ package app
 
 import (
 	"net/http"
-	"online-subscription/internal/repository"
-	"os"
-	"time"
-
 	"online-subscription/internal/config"
 	"online-subscription/internal/handler"
 	"online-subscription/internal/logger"
+	"online-subscription/internal/repository"
 	"online-subscription/internal/repository/postgres"
 	"online-subscription/internal/usecase"
+	"os"
+	"time"
 
 	_ "github.com/lib/pq"
 	"go.uber.org/zap"
@@ -49,7 +48,6 @@ func Start() *App {
 		Addr:    ":" + cfg.AppPort,
 		Handler: router,
 	}
-
 	logger.Info("Starting server", zap.String("port", cfg.AppPort))
 
 	return &App{Server: srv}
