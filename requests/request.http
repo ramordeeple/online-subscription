@@ -1,0 +1,56 @@
+@host = http://localhost:8080
+
+### Cоздание записи о подписке у пользователя по user_id (user_id UUID взял условный):
+POST {{host}}/subscriptions
+Content-Type: application/json
+
+{
+  "service_name": "AmazonTV+",
+  "price": 900,
+  "user_id": "54639c13-710c-48f1-80b0-d18e88a6e9f5",
+  "start_date": "09-2029",
+  "end_date": "07-2030"
+}
+
+### Cоздание записи о бессрочной подписке у пользователя по user_id (user_id UUID взял условный):
+POST {{host}}/subscriptions
+Content-Type: application/json
+
+{
+"service_name": "AmazonTV+",
+"price": 900,
+"user_id": "54639c13-710c-48f1-80b0-d18e88a6e9f5",
+"start_date": "09-2029"
+}
+
+### Получить все подписки
+GET {{host}}/subscriptions
+
+### Суммарной стоимость всех подписок за выбранный период с фильтрацией по id пользователя и названию подписки
+GET {{host}}/subscriptions/summary?from=09-2024&to=06-2035&user_id=54639c13-710c-48f1-80b0-d18e88a6e9f5&service_name=AmazonTV+
+
+### Сумма всех подписок c 07.2028 по 06.2030
+GET {{host}}/subscriptions/summary?from=07-2028&to=06-2030
+
+### Сумма всех подписок c 07.2025
+GET {{host}}/subscriptions/summary?from=07-2025
+
+### Обновить подписку по id (не user_id)
+PATCH http://localhost:8080/subscriptions/b99d9bc7-30ba-4e15-aa33-d37a948e24ef
+Content-Type: application/json
+
+{
+  "service_name": "Disney+",
+  "price": 5000,
+  "start_date": "01-2025",
+  "end_date": "12-2029"
+}
+
+### Удаление подписки по id (не user_id)
+DELETE {{host}}/subscriptions/6c5d5792-fe25-4330-8be8-bfcdafcbad52
+
+### Swagger документация
+GET http://localhost:8080/swagger/doc.json
+
+
+
