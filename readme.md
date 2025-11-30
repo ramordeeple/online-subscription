@@ -35,7 +35,7 @@ online-subscription/
 │  │  ├─ app.go                       # Инициализация сервера и зависимостей
 │  │  └─ router.go                    # Определение HTTP маршрутов
 │  ├─ config/
-│  │  └─ config.go                    # Загрузка конфигурации из YAML/.env
+│  │  └─ config.go                    # Загрузка конфигурации из .env
 │  ├─ handler/
 │  │  ├─ subscription_handler.go      # Основной CRUDL хэндлер для подписок
 │  │  ├─ dto/
