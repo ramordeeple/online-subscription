@@ -13,6 +13,17 @@ definitions:
       user_id:
         type: string
     type: object
+  dto.UpdateSubscriptionRequest:
+    properties:
+      end_date:
+        type: string
+      price:
+        type: integer
+      service_name:
+        type: string
+      start_date:
+        type: string
+    type: object
   model.Subscription:
     properties:
       endMonth:
@@ -34,7 +45,7 @@ definitions:
     type: object
 info:
   contact: {}
-  description: агреграция данных об онлайн-подписках пользователей
+  description: Агреграция данных об онлайн-подписках пользователей
   title: Online Subscriptions API service
   version: "1.0"
 paths:
@@ -140,6 +151,44 @@ paths:
           schema:
             type: string
       summary: Get subscription by ID
+      tags:
+      - subscriptions
+    patch:
+      consumes:
+      - application/json
+      description: Updates fields of an existing subscription by ID
+      parameters:
+      - description: Subscription ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Fields to update
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateSubscriptionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Subscription'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Subscription not found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Update a subscription
       tags:
       - subscriptions
   /subscriptions/summary:
