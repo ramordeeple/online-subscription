@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"online-subscription/internal/handler/dto"
 	"online-subscription/internal/handler/helpers"
 	"online-subscription/internal/handler/mapper"
 	"online-subscription/internal/handler/parser"
@@ -111,6 +112,81 @@ func (h *SubscriptionHandler) GetById(w http.ResponseWriter, r *http.Request, id
 
 	logger.Info("Subscription retrieved", zap.String("id", s.ID))
 	writeJSON(w, http.StatusOK, s)
+}
+
+// Update godoc
+// @Summary      Update a subscription
+// @Description  Updates fields of an existing subscription by ID
+// @Tags         subscriptions
+// @Accept       json
+// @Produce      json
+// @Param        id   path      string                     true  "Subscription ID"
+// @Param        body body      dto.UpdateSubscriptionRequest true  "Fields to update"
+// @Success      200  {object}  model.Subscription
+// @Failure      400  {string}  string  "Bad Request"
+// @Failure      404  {string}  string  "Subscription not found"
+// @Failure      500  {string}  string  "Internal Server Error"
+// @Router       /subscriptions/{id} [patch]
+func (h *SubscriptionHandler) Update(w http.ResponseWriter, r *http.Request, id string) {
+	if r.Method != http.MethodPatch && r.Method != http.MethodPut {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req dto.UpdateSubscriptionRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	sub, err := h.uc.Get(r.Context(), id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if sub == nil {
+		http.Error(w, "subscription not found", http.StatusNotFound)
+		return
+	}
+
+	if req.ServiceName != nil {
+		sub.ServiceName = *req.ServiceName
+	}
+	if req.Price != nil {
+		sub.Price = *req.Price
+	}
+	if req.StartDate != nil {
+		month, year, err := helpers.ParseDate(*req.StartDate)
+		if err != nil {
+			http.Error(w, "invalid start_date format", http.StatusBadRequest)
+			return
+		}
+		sub.StartMonth = month
+		sub.StartYear = year
+	}
+	if req.EndDate != nil && *req.EndDate != "" {
+		month, year, err := helpers.ParseDate(*req.EndDate)
+		if err != nil {
+			http.Error(w, "invalid end_date format", http.StatusBadRequest)
+			return
+		}
+		sub.EndMonth = &month
+		sub.EndYear = &year
+	}
+
+	if err := h.uc.Update(r.Context(), sub); err != nil {
+		logger.Error("Failed to update subscription", zap.Error(err))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	logger.Info("Subscription updated",
+		zap.String("id", sub.ID),
+		zap.String("service", sub.ServiceName),
+		zap.String("user_id", sub.UserID),
+	)
+
+	writeJSON(w, http.StatusOK, sub)
 }
 
 // Delete godoc

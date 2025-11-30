@@ -7,3 +7,10 @@ type CreateSubscriptionRequest struct {
 	UserID      *string `json:"user_id,omitempty"`
 	EndDate     *string `json:"end_date"`
 }
+
+type UpdateSubscriptionRequest struct {
+	ServiceName *string `json:"service_name,omitempty"`
+	Price       *int    `json:"price,omitempty"`
+	StartDate   *string `json:"start_date,omitempty"`
+	EndDate     *string `json:"end_date,omitempty"`
+}

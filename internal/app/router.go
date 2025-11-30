@@ -42,6 +42,8 @@ func NewRouter(h *handler.SubscriptionHandler) *http.ServeMux {
 			h.GetById(w, r, id)
 		case http.MethodDelete:
 			h.Delete(w, r, id)
+		case http.MethodPatch, http.MethodPut:
+			h.Update(w, r, id)
 		default:
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		}
