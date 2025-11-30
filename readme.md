@@ -1,4 +1,4 @@
-# 🏷️ **Online Subscription Service**
+# 🎟️ **Online Subscription Service**
 
 ### Сервис управления подписками.
 
