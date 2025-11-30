@@ -9,7 +9,7 @@ import (
 
 // @title Online Subscriptions API service
 // @version 1.0
-// @description агреграция данных об онлайн-подписках пользователей
+// @description Агреграция данных об онлайн-подписках пользователей
 // @BasePath /
 func main() {
 	app := app.Start()
