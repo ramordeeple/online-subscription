@@ -98,15 +98,34 @@ func (h *SubscriptionHandler) Summary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	from := r.URL.Query().Get("from")
+	to := r.URL.Query().Get("to")
+
 	fromMonth, fromYear, err := parseDate(from)
 	if err != nil {
 		http.Error(w, "invalid from date", http.StatusBadRequest)
 		return
 	}
 
+	var toMonth, toYear *int
+	if strings.TrimSpace(to) != "" {
+		m, y, err := parseDate(to)
+		if err != nil {
+			http.Error(w, "invalid to date", http.StatusBadRequest)
+			return
+		}
+		if y*12+m < fromYear*12+fromMonth {
+			http.Error(w, "`to` date cannot be earlier than `from` date", http.StatusBadRequest)
+			return
+		}
+		toMonth = &m
+		toYear = &y
+	}
+
 	f := model.SummaryFilter{
 		FromMonth:   fromMonth,
 		FromYear:    fromYear,
+		ToMonth:     toMonth,
+		ToYear:      toYear,
 		UserID:      ptrString(r.URL.Query().Get("user_id")),
 		ServiceName: ptrString(r.URL.Query().Get("service_name")),
 	}
@@ -123,6 +142,12 @@ func (h *SubscriptionHandler) Summary(w http.ResponseWriter, r *http.Request) {
 		zap.String("user_id", safeString(f.UserID)),
 		zap.String("service_name", safeString(f.ServiceName)),
 		zap.String("from", fmt.Sprintf("%02d-%d", fromMonth, fromYear)),
+		zap.String("to", func() string {
+			if toMonth != nil && toYear != nil {
+				return fmt.Sprintf("%02d-%d", *toMonth, *toYear)
+			}
+			return ""
+		}()),
 	)
 
 	writeJSON(w, http.StatusOK, map[string]int{"total": sum})

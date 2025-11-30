@@ -132,10 +132,19 @@ func (r *SubscriptionRepo) Sum(ctx context.Context, f *model.SummaryFilter) (int
 	query := `
 		SELECT COALESCE(SUM(price), 0)
 		FROM subscriptions
-		WHERE (start_year*12 + start_month) >= ($1*12 + $2)
+		WHERE 
+			COALESCE(end_year*12 + end_month, start_year*12 + start_month) >= ($1*12 + $2)
 	`
 	args := []any{f.FromYear, f.FromMonth}
 	i := 3
+
+	if f.ToMonth != nil && f.ToYear != nil {
+		query += fmt.Sprintf(`
+			AND (start_year*12 + start_month) <= $%d
+		`, i)
+		args = append(args, *f.ToYear*12+*f.ToMonth)
+		i++
+	}
 
 	if f.UserID != nil {
 		query += fmt.Sprintf(" AND user_id = $%d", i)

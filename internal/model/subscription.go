@@ -10,6 +10,8 @@ type SummaryFilter struct {
 	ServiceName *string
 	FromMonth   int
 	FromYear    int
+	ToMonth     *int
+	ToYear      *int
 }
 
 type Subscription struct {
