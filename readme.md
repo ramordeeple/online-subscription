@@ -39,9 +39,9 @@ online-subscription/
 │  ├─ handler/
 │  │  ├─ subscription_handler.go      # Основной CRUDL хэндлер для подписок
 │  │  ├─ dto/
-│  │  │  └─ request.go                # DTO для запросов/ответов API
+│  │  │  └─ request.go                # DTO для запросов
 │  │  ├─ helpers/
-│  │  │  └─ helpers.go                # Вспомогательные функции (JSON, ptr/safe)
+│  │  │  └─ helpers.go                # Вспомогательные функции для пакета handler
 │  │  ├─ mapper/
 │  │  │  └─ subscription_mapper.go    # Преобразование данных между слоями
 │  │  ├─ parser/
