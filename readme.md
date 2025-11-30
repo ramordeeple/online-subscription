@@ -43,7 +43,7 @@ online-subscription/
 │  │  ├─ helpers/
 │  │  │  └─ helpers.go                # Вспомогательные функции для пакета handler
 │  │  ├─ mapper/
-│  │  │  └─ subscription_mapper.go    # Преобразование данных между слоями
+│  │  │  └─ subscription_mapper.go    # Преобразование данных
 │  │  ├─ parser/
 │  │  │  └─ subscription_parser.go    # Разбор и парсинг данных
 │  │  └─ validator/
