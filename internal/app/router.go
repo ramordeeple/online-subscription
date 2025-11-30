@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"online-subscription/internal/handler"
 	"strings"
+
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 func NewRouter(h *handler.SubscriptionHandler) *http.ServeMux {
@@ -45,5 +47,6 @@ func NewRouter(h *handler.SubscriptionHandler) *http.ServeMux {
 		}
 	})
 
+	mux.Handle("/swagger/", httpSwagger.WrapHandler)
 	return mux
 }
