@@ -4,14 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"online-subscription/internal/handler/dto"
+	"online-subscription/internal/handler/helpers"
+	"online-subscription/internal/handler/mapper"
+	"online-subscription/internal/handler/parser"
 	"online-subscription/internal/logger"
 	"online-subscription/internal/model"
 	"online-subscription/internal/usecase"
 	"strings"
-	"time"
 
-	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
@@ -23,14 +23,25 @@ func NewSubscriptionHandler(uc *usecase.SubscriptionUseCase) *SubscriptionHandle
 	return &SubscriptionHandler{uc: uc}
 }
 
+// Create godoc
+// @Summary Create subscription
+// @Description Creates a new subscription
+// @Tags subscriptions
+// @Accept json
+// @Produce json
+// @Param subscription body dto.CreateSubscriptionRequest true "Subscription data"
+// @Success 201 {object} model.Subscription
+// @Failure 400 {string} string
+// @Failure 500 {string} string
+// @Router /subscriptions [post]
 func (h *SubscriptionHandler) Create(w http.ResponseWriter, r *http.Request) {
-	req, err := parseCreateRequest(r)
+	req, err := parser.ParseCreateRequest(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	sub, err := buildSubscriptionModel(req)
+	sub, err := mapper.BuildSubscriptionModel(req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -50,10 +61,21 @@ func (h *SubscriptionHandler) Create(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, sub)
 }
 
+// List godoc
+// @Summary List subscriptions
+// @Description Returns list of subscriptions with optional filters
+// @Tags subscriptions
+// @Accept json
+// @Produce json
+// @Param user_id query string false "User ID"
+// @Param service_name query string false "Service name"
+// @Success 200 {array} model.Subscription
+// @Failure 500 {string} string
+// @Router /subscriptions [get]
 func (h *SubscriptionHandler) List(w http.ResponseWriter, r *http.Request) {
 	f := model.SubscriptionFilter{
-		UserID:      ptrString(r.URL.Query().Get("user_id")),
-		ServiceName: ptrString(r.URL.Query().Get("service_name")),
+		UserID:      helpers.PtrString(r.URL.Query().Get("user_id")),
+		ServiceName: helpers.PtrString(r.URL.Query().Get("service_name")),
 	}
 
 	subs, err := h.uc.List(r.Context(), &f)
@@ -66,6 +88,16 @@ func (h *SubscriptionHandler) List(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, subs)
 }
 
+// GetById godoc
+// @Summary Get subscription by ID
+// @Description Returns a subscription by its ID
+// @Tags subscriptions
+// @Produce json
+// @Param id path string true "Subscription ID"
+// @Success 200 {object} model.Subscription
+// @Failure 404 {string} string
+// @Failure 500 {string} string
+// @Router /subscriptions/{id} [get]
 func (h *SubscriptionHandler) GetById(w http.ResponseWriter, r *http.Request, id string) {
 	s, err := h.uc.Get(r.Context(), id)
 	if err != nil {
@@ -81,6 +113,14 @@ func (h *SubscriptionHandler) GetById(w http.ResponseWriter, r *http.Request, id
 	writeJSON(w, http.StatusOK, s)
 }
 
+// Delete godoc
+// @Summary Delete subscription
+// @Description Deletes subscription by ID
+// @Tags subscriptions
+// @Param id path string true "Subscription ID"
+// @Success 204
+// @Failure 500 {string} string
+// @Router /subscriptions/{id} [delete]
 func (h *SubscriptionHandler) Delete(w http.ResponseWriter, r *http.Request, id string) {
 	if err := h.uc.Delete(r.Context(), id); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -91,6 +131,19 @@ func (h *SubscriptionHandler) Delete(w http.ResponseWriter, r *http.Request, id 
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// Summary godoc
+// @Summary Summary of payments
+// @Description Calculates total cost of subscriptions for date range
+// @Tags subscriptions
+// @Produce json
+// @Param from query string true "Start date MM-YYYY"
+// @Param to query string false "End date MM-YYYY"
+// @Param user_id query string false "User ID"
+// @Param service_name query string false "Service name"
+// @Success 200 {object} map[string]int
+// @Failure 400 {string} string
+// @Failure 500 {string} string
+// @Router /subscriptions/summary [get]
 func (h *SubscriptionHandler) Summary(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -100,7 +153,7 @@ func (h *SubscriptionHandler) Summary(w http.ResponseWriter, r *http.Request) {
 	from := r.URL.Query().Get("from")
 	to := r.URL.Query().Get("to")
 
-	fromMonth, fromYear, err := parseDate(from)
+	fromMonth, fromYear, err := helpers.ParseDate(from)
 	if err != nil {
 		http.Error(w, "invalid from date", http.StatusBadRequest)
 		return
@@ -108,7 +161,7 @@ func (h *SubscriptionHandler) Summary(w http.ResponseWriter, r *http.Request) {
 
 	var toMonth, toYear *int
 	if strings.TrimSpace(to) != "" {
-		m, y, err := parseDate(to)
+		m, y, err := helpers.ParseDate(to)
 		if err != nil {
 			http.Error(w, "invalid to date", http.StatusBadRequest)
 			return
@@ -126,8 +179,8 @@ func (h *SubscriptionHandler) Summary(w http.ResponseWriter, r *http.Request) {
 		FromYear:    fromYear,
 		ToMonth:     toMonth,
 		ToYear:      toYear,
-		UserID:      ptrString(r.URL.Query().Get("user_id")),
-		ServiceName: ptrString(r.URL.Query().Get("service_name")),
+		UserID:      helpers.PtrString(r.URL.Query().Get("user_id")),
+		ServiceName: helpers.PtrString(r.URL.Query().Get("service_name")),
 	}
 
 	sum, err := h.uc.Sum(r.Context(), &f)
@@ -139,8 +192,8 @@ func (h *SubscriptionHandler) Summary(w http.ResponseWriter, r *http.Request) {
 
 	logger.Info("Summary calculated",
 		zap.Int("sum", sum),
-		zap.String("user_id", safeString(f.UserID)),
-		zap.String("service_name", safeString(f.ServiceName)),
+		zap.String("user_id", helpers.SafeString(f.UserID)),
+		zap.String("service_name", helpers.SafeString(f.ServiceName)),
 		zap.String("from", fmt.Sprintf("%02d-%d", fromMonth, fromYear)),
 		zap.String("to", func() string {
 			if toMonth != nil && toYear != nil {
@@ -157,91 +210,4 @@ func writeJSON(w http.ResponseWriter, status int, data any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(data)
-}
-
-func ptrString(s string) *string {
-	if s == "" {
-		return nil
-	}
-	return &s
-}
-
-func safeString(s *string) string {
-	if s == nil {
-		return ""
-	}
-	return *s
-}
-
-func parseDate(str string) (int, int, error) {
-	str = strings.TrimSpace(str)
-	t, err := time.Parse("01-2006", str)
-	if err != nil {
-		return 0, 0, fmt.Errorf("invalid date format, expected MM-YYYY")
-	}
-	return int(t.Month()), t.Year(), nil
-}
-
-func validateSubscriptionDates(startMonth, startYear int, endMonth, endYear *int) error {
-	if endMonth != nil && endYear != nil {
-		start := startYear*12 + startMonth
-		end := *endYear*12 + *endMonth
-		if end < start {
-			return fmt.Errorf("end_date cannot be earlier than start_date")
-		}
-	}
-	return nil
-}
-
-func parseCreateRequest(r *http.Request) (*dto.CreateSubscriptionRequest, error) {
-	var req dto.CreateSubscriptionRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, fmt.Errorf("invalid JSON: %w", err)
-	}
-
-	if req.UserID == nil || *req.UserID == "" {
-		return nil, fmt.Errorf("user_id is required")
-	}
-	if _, err := uuid.Parse(*req.UserID); err != nil {
-		return nil, fmt.Errorf("user_id must be valid UUID")
-	}
-
-	if _, _, err := parseDate(req.StartDate); err != nil {
-		return nil, fmt.Errorf("invalid start_date format, expected MM-YYYY")
-	}
-
-	if req.EndDate != nil && *req.EndDate != "" {
-		if _, _, err := parseDate(*req.EndDate); err != nil {
-			return nil, fmt.Errorf("invalid end_date format, expected MM-YYYY")
-		}
-	}
-
-	return &req, nil
-}
-
-func buildSubscriptionModel(req *dto.CreateSubscriptionRequest) (*model.Subscription, error) {
-	startMonth, startYear, _ := parseDate(req.StartDate)
-
-	var endMonth *int
-	var endYear *int
-	if req.EndDate != nil && *req.EndDate != "" {
-		m, y, _ := parseDate(*req.EndDate)
-		endMonth = &m
-		endYear = &y
-	}
-
-	if err := validateSubscriptionDates(startMonth, startYear, endMonth, endYear); err != nil {
-		return nil, err
-	}
-
-	return &model.Subscription{
-		ID:          uuid.New().String(),
-		UserID:      *req.UserID,
-		ServiceName: req.ServiceName,
-		Price:       req.Price,
-		StartMonth:  startMonth,
-		StartYear:   startYear,
-		EndMonth:    endMonth,
-		EndYear:     endYear,
-	}, nil
 }
