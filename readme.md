@@ -28,39 +28,39 @@
 online-subscription/
 ├─ cmd/
 │  └─ online-subscription/
-│     └─ main.go                 # Точка входа приложения, запускает сервер
-├─ docs/                          # Документация и Swagger UI
+│     └─ main.go                      # Точка входа приложения, запускает сервер
+├─ docs/                              # Документация и Swagger UI
 ├─ internal/
 │  ├─ app/
-│  │  ├─ app.go                   # Инициализация сервера и зависимостей
-│  │  └─ router.go                # Определение HTTP маршрутов
+│  │  ├─ app.go                       # Инициализация сервера и зависимостей
+│  │  └─ router.go                    # Определение HTTP маршрутов
 │  ├─ config/
-│  │  └─ config.go                # Загрузка конфигурации из YAML/.env
+│  │  └─ config.go                    # Загрузка конфигурации из YAML/.env
 │  ├─ handler/
-│  │  ├─ subscription_handler.go  # Основной CRUDL хэндлер для подписок
+│  │  ├─ subscription_handler.go      # Основной CRUDL хэндлер для подписок
 │  │  ├─ dto/
-│  │  │  └─ request.go            # DTO для запросов/ответов API
+│  │  │  └─ request.go                # DTO для запросов/ответов API
 │  │  ├─ helpers/
-│  │  │  └─ helpers.go            # Вспомогательные функции (JSON, ptr/safe)
+│  │  │  └─ helpers.go                # Вспомогательные функции (JSON, ptr/safe)
 │  │  ├─ mapper/
-│  │  │  └─ subscription_mapper.go # Преобразование данных между слоями
+│  │  │  └─ subscription_mapper.go    # Преобразование данных между слоями
 │  │  ├─ parser/
-│  │  │  └─ subscription_parser.go # Разбор и парсинг данных
+│  │  │  └─ subscription_parser.go    # Разбор и парсинг данных
 │  │  └─ validator/
 │  │     └─ subscription_validator.go # Валидация бизнес-логики
 │  ├─ logger/
-│  │  └─ logger.go                # Настройка Zap логирования
+│  │  └─ logger.go                    # Настройка Zap логирования
 │  ├─ model/
-│  │  └─ subscription.go          # Модели данных (Subscription)
+│  │  └─ subscription.go              # Модели данных (Subscription)
 │  ├─ repository/
 │  │  ├─ postgres/
-│  │  │  └─ postgres.go           # PostgreSQL реализация репозитория
-│  │  └─ migrations.go            # Управление миграциями БД
+│  │  │  └─ subscription_repo.go      # PostgreSQL реализация интерфейса репозитория
+│  │  ├─ migrations.go                # Управление миграциями БД
+│  │  └─ repository.go                # Интерфейс для CRUDL
 │  └─ usecase/
-│     └─ subscription.go          # Бизнес-логика CRUDL подписок
-└─ migrations/
-   ├─ 000001_initial_schema.up.sql
-   └─ 000001_initial_schema.down.sql
+│     └─ subscription.go              # Бизнес-логика CRUDL подписок
+└─ migrations/                        # Файлы .sql для инициализации базы данных
+
 
 ```
 
