@@ -23,7 +23,6 @@ func main() {
 	srv := application.Server
 
 	go func() {
-		logger.Info("Starting server", zap.String("addr", srv.Addr))
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Fatal("Server crashed", zap.Error(err))
 		}
