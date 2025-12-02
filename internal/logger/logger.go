@@ -33,3 +33,9 @@ func Sync() {
 		_ = log.Sync()
 	}
 }
+
+func Fatal(msg string, args ...zap.Field) {
+	if log != nil {
+		log.Fatal(msg, args...)
+	}
+}
