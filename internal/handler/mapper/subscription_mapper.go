@@ -1,27 +1,31 @@
 package mapper
 
 import (
+	"fmt"
 	"online-subscription/internal/handler/dto"
-	"online-subscription/internal/handler/helpers"
-	"online-subscription/internal/handler/validator"
 	"online-subscription/internal/model"
+	"time"
 
 	"github.com/google/uuid"
 )
 
 func BuildSubscriptionModel(req *dto.CreateSubscriptionRequest) (*model.Subscription, error) {
-	startMonth, startYear, _ := helpers.ParseDate(req.StartDate)
-
-	var endMonth *int
-	var endYear *int
-	if req.EndDate != nil && *req.EndDate != "" {
-		m, y, _ := helpers.ParseDate(*req.EndDate)
-		endMonth = &m
-		endYear = &y
+	startDate, err := time.Parse("2006-01-01", req.StartDate)
+	if err != nil {
+		return nil, fmt.Errorf("invalid start_date, expected YYYY-MM-DD")
 	}
 
-	if err := validator.ValidateSubscriptionDates(startMonth, startYear, endMonth, endYear); err != nil {
-		return nil, err
+	var endDate *time.Time
+	if req.EndDate != nil && *req.EndDate != "" {
+		t, err := time.Parse("2006-01-02", *req.EndDate)
+		if err != nil {
+			return nil, fmt.Errorf("invalid end_date, expected YYYY-MM-DD")
+		}
+		endDate = &t
+	}
+
+	if endDate != nil && endDate.Before(startDate) {
+		return nil, fmt.Errorf("end_date must be >= start_date")
 	}
 
 	return &model.Subscription{
@@ -29,9 +33,7 @@ func BuildSubscriptionModel(req *dto.CreateSubscriptionRequest) (*model.Subscrip
 		UserID:      *req.UserID,
 		ServiceName: req.ServiceName,
 		Price:       req.Price,
-		StartMonth:  startMonth,
-		StartYear:   startYear,
-		EndMonth:    endMonth,
-		EndYear:     endYear,
+		StartDate:   startDate,
+		EndDate:     endDate,
 	}, nil
 }
