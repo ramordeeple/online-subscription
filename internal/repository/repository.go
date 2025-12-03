@@ -13,3 +13,7 @@ type SubscriptionRepository interface {
 	List(ctx context.Context, filter *model.SubscriptionFilter) ([]*model.Subscription, error)
 	Sum(ctx context.Context, filter *model.SummaryFilter) (int, error)
 }
+
+type Scanner interface {
+	Scan(dest ...any) error
+}
