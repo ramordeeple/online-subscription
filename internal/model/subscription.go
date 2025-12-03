@@ -24,5 +24,5 @@ type SummaryFilter struct {
 	UserID      *string
 	ServiceName *string
 	FromDate    time.Time
-	ToDate      time.Time
+	ToDate      *time.Time
 }
