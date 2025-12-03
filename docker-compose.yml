@@ -23,3 +23,6 @@ services:
       POSTGRES_USER: subscription
       POSTGRES_PASSWORD: 123
       POSTGRES_DB: subscriptions
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
