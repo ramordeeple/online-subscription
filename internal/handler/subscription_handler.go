@@ -24,7 +24,17 @@ func NewSubscriptionHandler(uc *usecase.SubscriptionUseCase) *SubscriptionHandle
 	return &SubscriptionHandler{uc: uc}
 }
 
-// Create handles POST /subscriptions
+// Create godoc
+// @Summary Create a new subscription
+// @Description Create a subscription record
+// @Tags subscriptions
+// @Accept json
+// @Produce json
+// @Param subscription body dto.CreateSubscriptionRequest true "Subscription data"
+// @Success 201 {object} model.Subscription
+// @Failure 400 {string} string
+// @Failure 500 {string} string
+// @Router /subscriptions [post]
 func (h *SubscriptionHandler) Create(w http.ResponseWriter, r *http.Request) {
 	req, err := parser.ParseCreateRequest(r)
 	if err != nil {
@@ -52,7 +62,17 @@ func (h *SubscriptionHandler) Create(w http.ResponseWriter, r *http.Request) {
 	helpers.WriteJSON(w, http.StatusCreated, sub)
 }
 
-// List handles GET /subscriptions
+// List godoc
+// @Summary List subscriptions
+// @Description Get a list of subscriptions with optional filters
+// @Tags subscriptions
+// @Accept json
+// @Produce json
+// @Param user_id query string false "Filter by User ID"
+// @Param service_name query string false "Filter by Service Name"
+// @Success 200 {array} model.Subscription
+// @Failure 500 {string} string
+// @Router /subscriptions [get]
 func (h *SubscriptionHandler) List(w http.ResponseWriter, r *http.Request) {
 	f := model.SubscriptionFilter{
 		UserID:      helpers.PtrString(r.URL.Query().Get("user_id")),
@@ -69,7 +89,16 @@ func (h *SubscriptionHandler) List(w http.ResponseWriter, r *http.Request) {
 	helpers.WriteJSON(w, http.StatusOK, subs)
 }
 
-// GetById handles GET /subscriptions/{id}
+// GetById godoc
+// @Summary Get subscription by ID
+// @Description Returns a subscription by its ID
+// @Tags subscriptions
+// @Produce json
+// @Param id path string true "Subscription ID"
+// @Success 200 {object} model.Subscription
+// @Failure 404 {string} string
+// @Failure 500 {string} string
+// @Router /subscriptions/{id} [get]
 func (h *SubscriptionHandler) GetById(w http.ResponseWriter, r *http.Request, id string) {
 	s, err := h.uc.Get(r.Context(), id)
 	if err != nil {
@@ -85,7 +114,19 @@ func (h *SubscriptionHandler) GetById(w http.ResponseWriter, r *http.Request, id
 	helpers.WriteJSON(w, http.StatusOK, s)
 }
 
-// Update handles PATCH /subscriptions/{id}
+// Update godoc
+// @Summary Update subscription
+// @Description Update fields of an existing subscription by ID
+// @Tags subscriptions
+// @Accept json
+// @Produce json
+// @Param id path string true "Subscription ID"
+// @Param body body dto.UpdateSubscriptionRequest true "Fields to update"
+// @Success 200 {object} model.Subscription
+// @Failure 400 {string} string
+// @Failure 404 {string} string
+// @Failure 500 {string} string
+// @Router /subscriptions/{id} [patch]
 func (h *SubscriptionHandler) Update(w http.ResponseWriter, r *http.Request, id string) {
 	if r.Method != http.MethodPatch && r.Method != http.MethodPut {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -148,7 +189,14 @@ func (h *SubscriptionHandler) Update(w http.ResponseWriter, r *http.Request, id 
 	helpers.WriteJSON(w, http.StatusOK, sub)
 }
 
-// Delete handles DELETE /subscriptions/{id}
+// Delete godoc
+// @Summary Delete subscription
+// @Description Delete a subscription by ID
+// @Tags subscriptions
+// @Param id path string true "Subscription ID"
+// @Success 204
+// @Failure 500 {string} string
+// @Router /subscriptions/{id} [delete]
 func (h *SubscriptionHandler) Delete(w http.ResponseWriter, r *http.Request, id string) {
 	if err := h.uc.Delete(r.Context(), id); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -159,7 +207,19 @@ func (h *SubscriptionHandler) Delete(w http.ResponseWriter, r *http.Request, id 
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// Summary handles GET /subscriptions/summary
+// Summary godoc
+// @Summary Get subscriptions summary
+// @Description Calculate total subscription cost for a period with optional filters
+// @Tags subscriptions
+// @Produce json
+// @Param from query string true "Start date in MM-YYYY"
+// @Param to query string false "End date in MM-YYYY"
+// @Param user_id query string false "Filter by User ID"
+// @Param service_name query string false "Filter by Service Name"
+// @Success 200 {object} map[string]int
+// @Failure 400 {string} string
+// @Failure 500 {string} string
+// @Router /subscriptions/summary [get]
 func (h *SubscriptionHandler) Summary(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
