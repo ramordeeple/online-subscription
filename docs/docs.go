@@ -17,7 +17,7 @@ const docTemplate = `{
     "paths": {
         "/subscriptions": {
             "get": {
-                "description": "Returns list of subscriptions with optional filters",
+                "description": "Get a list of subscriptions with optional filters",
                 "consumes": [
                     "application/json"
                 ],
@@ -31,13 +31,13 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "User ID",
+                        "description": "Filter by User ID",
                         "name": "user_id",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "Service name",
+                        "description": "Filter by Service Name",
                         "name": "service_name",
                         "in": "query"
                     }
@@ -61,7 +61,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Creates a new subscription",
+                "description": "Create a subscription record",
                 "consumes": [
                     "application/json"
                 ],
@@ -71,7 +71,7 @@ const docTemplate = `{
                 "tags": [
                     "subscriptions"
                 ],
-                "summary": "Create subscription",
+                "summary": "Create a new subscription",
                 "parameters": [
                     {
                         "description": "Subscription data",
@@ -107,37 +107,37 @@ const docTemplate = `{
         },
         "/subscriptions/summary": {
             "get": {
-                "description": "Calculates total cost of subscriptions for date range",
+                "description": "Calculate total subscription cost for a period with optional filters",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "subscriptions"
                 ],
-                "summary": "Summary of payments",
+                "summary": "Get subscriptions summary",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Start date MM-YYYY",
+                        "description": "Start date in MM-YYYY",
                         "name": "from",
                         "in": "query",
                         "required": true
                     },
                     {
                         "type": "string",
-                        "description": "End date MM-YYYY",
+                        "description": "End date in MM-YYYY",
                         "name": "to",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "User ID",
+                        "description": "Filter by User ID",
                         "name": "user_id",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "Service name",
+                        "description": "Filter by Service Name",
                         "name": "service_name",
                         "in": "query"
                     }
@@ -208,7 +208,7 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Deletes subscription by ID",
+                "description": "Delete a subscription by ID",
                 "tags": [
                     "subscriptions"
                 ],
@@ -235,7 +235,7 @@ const docTemplate = `{
                 }
             },
             "patch": {
-                "description": "Updates fields of an existing subscription by ID",
+                "description": "Update fields of an existing subscription by ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -245,7 +245,7 @@ const docTemplate = `{
                 "tags": [
                     "subscriptions"
                 ],
-                "summary": "Update a subscription",
+                "summary": "Update subscription",
                 "parameters": [
                     {
                         "type": "string",
@@ -278,7 +278,7 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "Subscription not found",
+                        "description": "Not Found",
                         "schema": {
                             "type": "string"
                         }
@@ -334,28 +334,22 @@ const docTemplate = `{
         "model.Subscription": {
             "type": "object",
             "properties": {
-                "endMonth": {
-                    "type": "integer"
-                },
-                "endYear": {
-                    "type": "integer"
+                "end_date": {
+                    "type": "string"
                 },
                 "id": {
                     "type": "string"
                 },
-                "price": {
+                "monthly_price": {
                     "type": "integer"
                 },
-                "serviceName": {
+                "service_name": {
                     "type": "string"
                 },
-                "startMonth": {
-                    "type": "integer"
+                "start_date": {
+                    "type": "string"
                 },
-                "startYear": {
-                    "type": "integer"
-                },
-                "userID": {
+                "user_id": {
                     "type": "string"
                 }
             }

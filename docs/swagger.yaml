@@ -26,21 +26,17 @@ definitions:
     type: object
   model.Subscription:
     properties:
-      endMonth:
-        type: integer
-      endYear:
-        type: integer
+      end_date:
+        type: string
       id:
         type: string
-      price:
+      monthly_price:
         type: integer
-      serviceName:
+      service_name:
         type: string
-      startMonth:
-        type: integer
-      startYear:
-        type: integer
-      userID:
+      start_date:
+        type: string
+      user_id:
         type: string
     type: object
 info:
@@ -53,13 +49,13 @@ paths:
     get:
       consumes:
       - application/json
-      description: Returns list of subscriptions with optional filters
+      description: Get a list of subscriptions with optional filters
       parameters:
-      - description: User ID
+      - description: Filter by User ID
         in: query
         name: user_id
         type: string
-      - description: Service name
+      - description: Filter by Service Name
         in: query
         name: service_name
         type: string
@@ -82,7 +78,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: Creates a new subscription
+      description: Create a subscription record
       parameters:
       - description: Subscription data
         in: body
@@ -105,12 +101,12 @@ paths:
           description: Internal Server Error
           schema:
             type: string
-      summary: Create subscription
+      summary: Create a new subscription
       tags:
       - subscriptions
   /subscriptions/{id}:
     delete:
-      description: Deletes subscription by ID
+      description: Delete a subscription by ID
       parameters:
       - description: Subscription ID
         in: path
@@ -156,7 +152,7 @@ paths:
     patch:
       consumes:
       - application/json
-      description: Updates fields of an existing subscription by ID
+      description: Update fields of an existing subscription by ID
       parameters:
       - description: Subscription ID
         in: path
@@ -181,34 +177,34 @@ paths:
           schema:
             type: string
         "404":
-          description: Subscription not found
+          description: Not Found
           schema:
             type: string
         "500":
           description: Internal Server Error
           schema:
             type: string
-      summary: Update a subscription
+      summary: Update subscription
       tags:
       - subscriptions
   /subscriptions/summary:
     get:
-      description: Calculates total cost of subscriptions for date range
+      description: Calculate total subscription cost for a period with optional filters
       parameters:
-      - description: Start date MM-YYYY
+      - description: Start date in MM-YYYY
         in: query
         name: from
         required: true
         type: string
-      - description: End date MM-YYYY
+      - description: End date in MM-YYYY
         in: query
         name: to
         type: string
-      - description: User ID
+      - description: Filter by User ID
         in: query
         name: user_id
         type: string
-      - description: Service name
+      - description: Filter by Service Name
         in: query
         name: service_name
         type: string
@@ -229,7 +225,7 @@ paths:
           description: Internal Server Error
           schema:
             type: string
-      summary: Summary of payments
+      summary: Get subscriptions summary
       tags:
       - subscriptions
 swagger: "2.0"
