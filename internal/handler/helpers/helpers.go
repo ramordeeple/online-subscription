@@ -24,3 +24,17 @@ func ParseDateToTime(str string) (time.Time, error) {
 
 	return t, nil
 }
+
+func PtrString(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
+}
+
+func SafeString(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
+}
