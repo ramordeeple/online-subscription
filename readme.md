@@ -88,6 +88,7 @@ DB_PASSWORD=123
 DB_NAME=subscriptions
 DB_SSLMODE=disable
 APP_PORT=8080
+LOG_LEVEL=info
 ```
 
 ---
