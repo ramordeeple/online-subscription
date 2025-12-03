@@ -3,6 +3,7 @@ package mapper
 import (
 	"fmt"
 	"online-subscription/internal/handler/dto"
+	"online-subscription/internal/handler/helpers"
 	"online-subscription/internal/model"
 	"time"
 
@@ -10,16 +11,16 @@ import (
 )
 
 func BuildSubscriptionModel(req *dto.CreateSubscriptionRequest) (*model.Subscription, error) {
-	startDate, err := time.Parse("2006-01-01", req.StartDate)
+	startDate, err := helpers.ParseDateToTime(req.StartDate)
 	if err != nil {
-		return nil, fmt.Errorf("invalid start_date, expected YYYY-MM-DD")
+		return nil, fmt.Errorf("invalid start_date, expected MM-YYYY")
 	}
 
 	var endDate *time.Time
 	if req.EndDate != nil && *req.EndDate != "" {
-		t, err := time.Parse("2006-01-02", *req.EndDate)
+		t, err := helpers.ParseDateToTime(*req.EndDate)
 		if err != nil {
-			return nil, fmt.Errorf("invalid end_date, expected YYYY-MM-DD")
+			return nil, fmt.Errorf("invalid end_date, expected MM-YYYY")
 		}
 		endDate = &t
 	}
