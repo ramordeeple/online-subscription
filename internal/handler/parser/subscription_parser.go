@@ -23,12 +23,12 @@ func ParseCreateRequest(r *http.Request) (*dto.CreateSubscriptionRequest, error)
 		return nil, fmt.Errorf("user_id must be valid UUID")
 	}
 
-	if _, _, err := helpers.ParseDate(req.StartDate); err != nil {
+	if _, err := helpers.ParseDateToTime(req.StartDate); err != nil {
 		return nil, fmt.Errorf("invalid start_date format, expected MM-YYYY")
 	}
 
 	if req.EndDate != nil && *req.EndDate != "" {
-		if _, _, err := helpers.ParseDate(*req.EndDate); err != nil {
+		if _, err := helpers.ParseDateToTime(*req.EndDate); err != nil {
 			return nil, fmt.Errorf("invalid end_date format, expected MM-YYYY")
 		}
 	}
