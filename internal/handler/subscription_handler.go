@@ -2,7 +2,6 @@ package handler
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"online-subscription/internal/handler/dto"
 	"online-subscription/internal/handler/helpers"
@@ -12,6 +11,7 @@ import (
 	"online-subscription/internal/model"
 	"online-subscription/internal/usecase"
 	"strings"
+	"time"
 
 	"go.uber.org/zap"
 )
@@ -24,17 +24,7 @@ func NewSubscriptionHandler(uc *usecase.SubscriptionUseCase) *SubscriptionHandle
 	return &SubscriptionHandler{uc: uc}
 }
 
-// Create godoc
-// @Summary Create subscription
-// @Description Creates a new subscription
-// @Tags subscriptions
-// @Accept json
-// @Produce json
-// @Param subscription body dto.CreateSubscriptionRequest true "Subscription data"
-// @Success 201 {object} model.Subscription
-// @Failure 400 {string} string
-// @Failure 500 {string} string
-// @Router /subscriptions [post]
+// Create handles POST /subscriptions
 func (h *SubscriptionHandler) Create(w http.ResponseWriter, r *http.Request) {
 	req, err := parser.ParseCreateRequest(r)
 	if err != nil {
@@ -62,17 +52,7 @@ func (h *SubscriptionHandler) Create(w http.ResponseWriter, r *http.Request) {
 	helpers.WriteJSON(w, http.StatusCreated, sub)
 }
 
-// List godoc
-// @Summary List subscriptions
-// @Description Returns list of subscriptions with optional filters
-// @Tags subscriptions
-// @Accept json
-// @Produce json
-// @Param user_id query string false "User ID"
-// @Param service_name query string false "Service name"
-// @Success 200 {array} model.Subscription
-// @Failure 500 {string} string
-// @Router /subscriptions [get]
+// List handles GET /subscriptions
 func (h *SubscriptionHandler) List(w http.ResponseWriter, r *http.Request) {
 	f := model.SubscriptionFilter{
 		UserID:      helpers.PtrString(r.URL.Query().Get("user_id")),
@@ -89,16 +69,7 @@ func (h *SubscriptionHandler) List(w http.ResponseWriter, r *http.Request) {
 	helpers.WriteJSON(w, http.StatusOK, subs)
 }
 
-// GetById godoc
-// @Summary Get subscription by ID
-// @Description Returns a subscription by its ID
-// @Tags subscriptions
-// @Produce json
-// @Param id path string true "Subscription ID"
-// @Success 200 {object} model.Subscription
-// @Failure 404 {string} string
-// @Failure 500 {string} string
-// @Router /subscriptions/{id} [get]
+// GetById handles GET /subscriptions/{id}
 func (h *SubscriptionHandler) GetById(w http.ResponseWriter, r *http.Request, id string) {
 	s, err := h.uc.Get(r.Context(), id)
 	if err != nil {
@@ -114,19 +85,7 @@ func (h *SubscriptionHandler) GetById(w http.ResponseWriter, r *http.Request, id
 	helpers.WriteJSON(w, http.StatusOK, s)
 }
 
-// Update godoc
-// @Summary      Update a subscription
-// @Description  Updates fields of an existing subscription by ID
-// @Tags         subscriptions
-// @Accept       json
-// @Produce      json
-// @Param        id   path      string                     true  "Subscription ID"
-// @Param        body body      dto.UpdateSubscriptionRequest true  "Fields to update"
-// @Success      200  {object}  model.Subscription
-// @Failure      400  {string}  string  "Bad Request"
-// @Failure      404  {string}  string  "Subscription not found"
-// @Failure      500  {string}  string  "Internal Server Error"
-// @Router       /subscriptions/{id} [patch]
+// Update handles PATCH /subscriptions/{id}
 func (h *SubscriptionHandler) Update(w http.ResponseWriter, r *http.Request, id string) {
 	if r.Method != http.MethodPatch && r.Method != http.MethodPut {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -156,22 +115,22 @@ func (h *SubscriptionHandler) Update(w http.ResponseWriter, r *http.Request, id 
 		sub.Price = *req.Price
 	}
 	if req.StartDate != nil {
-		month, year, err := helpers.ParseDate(*req.StartDate)
+		start, err := helpers.ParseDateToTime(*req.StartDate)
 		if err != nil {
 			http.Error(w, "invalid start_date format", http.StatusBadRequest)
 			return
 		}
-		sub.StartMonth = month
-		sub.StartYear = year
+		sub.StartDate = start
 	}
 	if req.EndDate != nil && *req.EndDate != "" {
-		month, year, err := helpers.ParseDate(*req.EndDate)
+		end, err := helpers.ParseDateToTime(*req.EndDate)
 		if err != nil {
 			http.Error(w, "invalid end_date format", http.StatusBadRequest)
 			return
 		}
-		sub.EndMonth = &month
-		sub.EndYear = &year
+		sub.EndDate = &end
+	} else {
+		sub.EndDate = nil
 	}
 
 	if err := h.uc.Update(r.Context(), sub); err != nil {
@@ -189,14 +148,7 @@ func (h *SubscriptionHandler) Update(w http.ResponseWriter, r *http.Request, id 
 	helpers.WriteJSON(w, http.StatusOK, sub)
 }
 
-// Delete godoc
-// @Summary Delete subscription
-// @Description Deletes subscription by ID
-// @Tags subscriptions
-// @Param id path string true "Subscription ID"
-// @Success 204
-// @Failure 500 {string} string
-// @Router /subscriptions/{id} [delete]
+// Delete handles DELETE /subscriptions/{id}
 func (h *SubscriptionHandler) Delete(w http.ResponseWriter, r *http.Request, id string) {
 	if err := h.uc.Delete(r.Context(), id); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -207,19 +159,7 @@ func (h *SubscriptionHandler) Delete(w http.ResponseWriter, r *http.Request, id 
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// Summary godoc
-// @Summary Summary of payments
-// @Description Calculates total cost of subscriptions for date range
-// @Tags subscriptions
-// @Produce json
-// @Param from query string true "Start date MM-YYYY"
-// @Param to query string false "End date MM-YYYY"
-// @Param user_id query string false "User ID"
-// @Param service_name query string false "Service name"
-// @Success 200 {object} map[string]int
-// @Failure 400 {string} string
-// @Failure 500 {string} string
-// @Router /subscriptions/summary [get]
+// Summary handles GET /subscriptions/summary
 func (h *SubscriptionHandler) Summary(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -229,32 +169,29 @@ func (h *SubscriptionHandler) Summary(w http.ResponseWriter, r *http.Request) {
 	from := r.URL.Query().Get("from")
 	to := r.URL.Query().Get("to")
 
-	fromMonth, fromYear, err := helpers.ParseDate(from)
+	fromDate, err := helpers.ParseDateToTime(from)
 	if err != nil {
 		http.Error(w, "invalid from date", http.StatusBadRequest)
 		return
 	}
 
-	var toMonth, toYear *int
+	var toDate *time.Time
 	if strings.TrimSpace(to) != "" {
-		m, y, err := helpers.ParseDate(to)
+		t, err := helpers.ParseDateToTime(to)
 		if err != nil {
 			http.Error(w, "invalid to date", http.StatusBadRequest)
 			return
 		}
-		if y*12+m < fromYear*12+fromMonth {
+		if t.Before(fromDate) {
 			http.Error(w, "`to` date cannot be earlier than `from` date", http.StatusBadRequest)
 			return
 		}
-		toMonth = &m
-		toYear = &y
+		toDate = &t
 	}
 
 	f := model.SummaryFilter{
-		FromMonth:   fromMonth,
-		FromYear:    fromYear,
-		ToMonth:     toMonth,
-		ToYear:      toYear,
+		FromDate:    fromDate,
+		ToDate:      toDate,
 		UserID:      helpers.PtrString(r.URL.Query().Get("user_id")),
 		ServiceName: helpers.PtrString(r.URL.Query().Get("service_name")),
 	}
@@ -270,10 +207,10 @@ func (h *SubscriptionHandler) Summary(w http.ResponseWriter, r *http.Request) {
 		zap.Int("sum", sum),
 		zap.String("user_id", helpers.SafeString(f.UserID)),
 		zap.String("service_name", helpers.SafeString(f.ServiceName)),
-		zap.String("from", fmt.Sprintf("%02d-%d", fromMonth, fromYear)),
+		zap.String("from", fromDate.Format("01-2006")),
 		zap.String("to", func() string {
-			if toMonth != nil && toYear != nil {
-				return fmt.Sprintf("%02d-%d", *toMonth, *toYear)
+			if toDate != nil {
+				return toDate.Format("01-2006")
 			}
 			return ""
 		}()),
