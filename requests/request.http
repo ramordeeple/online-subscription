@@ -8,8 +8,7 @@ Content-Type: application/json
   "service_name": "AmazonTV+",
   "price": 900,
   "user_id": "54639c13-710c-48f1-80b0-d18e88a6e9f5",
-  "start_date": "09-2029",
-  "end_date": "07-2030"
+  "start_date": "09-2029"
 }
 
 ### Cоздание записи о бессрочной подписке у пользователя по user_id (user_id UUID взял условный):
