@@ -115,35 +115,37 @@ func (r *SubscriptionRepo) List(ctx context.Context, f *model.SubscriptionFilter
 
 func (r *SubscriptionRepo) Sum(ctx context.Context, f *model.SummaryFilter) (int, error) {
 	query := `
-		SELECT COALESCE(SUM(
-			(price * 
-				(
-					LEAST(COALESCE(end_date, $2), $2)::date_part('month') + 1 
-					- GREATEST(start_date, $1)::date_part('month')
-				)
-			)
-		), 0)
-		FROM subscriptions
-		WHERE start_date <= $2 AND (end_date IS NULL OR end_date >= $1)
+	SELECT COALESCE(SUM(
+		price * (
+			(
+				DATE_PART('year', LEAST(COALESCE(end_date, $2), $2)) - DATE_PART('year', GREATEST(start_date, $1))
+			) * 12 +
+			(
+				DATE_PART('month', LEAST(COALESCE(end_date, $2), $2)) - DATE_PART('month', GREATEST(start_date, $1))
+			) + 1
+		)
+	), 0)
+	FROM subscriptions
+	WHERE start_date <= $2 AND (end_date IS NULL OR end_date >= $1)
 	`
-	args := []any{f.FromDate, f.ToDate}
 
+	args := []any{f.FromDate, f.ToDate}
 	i := 3
-	if f.UserID != nil {
+
+	if f.UserID != nil && *f.UserID != "" {
 		query += fmt.Sprintf(" AND user_id = $%d", i)
 		args = append(args, *f.UserID)
 		i++
 	}
 
-	if f.ServiceName != nil {
+	if f.ServiceName != nil && *f.ServiceName != "" {
 		query += fmt.Sprintf(" AND service_name = $%d", i)
 		args = append(args, *f.ServiceName)
 		i++
 	}
 
 	var sum int
-	err := r.db.QueryRowContext(ctx, query, args...).Scan(&sum)
-	if err != nil {
+	if err := r.db.QueryRowContext(ctx, query, args...).Scan(&sum); err != nil {
 		return 0, err
 	}
 
