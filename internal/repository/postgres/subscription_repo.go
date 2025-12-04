@@ -116,7 +116,7 @@ func (r *SubscriptionRepo) List(ctx context.Context, f *model.SubscriptionFilter
 func (r *SubscriptionRepo) Sum(ctx context.Context, f *model.SummaryFilter) (int, error) {
 	query := `
 	SELECT COALESCE(SUM(
-		price * (
+		monthly_price * (
 			(
 				DATE_PART('year', LEAST(COALESCE(end_date, $2), $2)) - DATE_PART('year', GREATEST(start_date, $1))
 			) * 12 +
