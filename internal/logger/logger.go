@@ -1,14 +1,35 @@
 package logger
 
 import (
+	"strings"
+
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 var log *zap.Logger
 
-func Init() error {
+func Init(level string) error {
+	var zapLevel zapcore.Level
+
+	switch strings.ToUpper(level) {
+	case "DEBUG":
+		zapLevel = zapcore.DebugLevel
+	case "INFO":
+		zapLevel = zapcore.InfoLevel
+	case "WARN":
+		zapLevel = zapcore.WarnLevel
+	case "ERROR":
+		zapLevel = zapcore.ErrorLevel
+	default:
+		zapLevel = zapcore.InfoLevel
+	}
+
+	cfg := zap.NewDevelopmentConfig()
+	cfg.Level = zap.NewAtomicLevelAt(zapLevel)
+
 	var err error
-	log, err = zap.NewDevelopment()
+	log, err = cfg.Build()
 	return err
 }
 

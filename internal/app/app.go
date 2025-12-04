@@ -22,7 +22,7 @@ type App struct {
 func Start() *App {
 	cfg := config.LoadConfig(".env")
 
-	if err := logger.Init(); err != nil {
+	if err := logger.Init(cfg.LogLevel); err != nil {
 		panic(err)
 	}
 	defer logger.Sync()

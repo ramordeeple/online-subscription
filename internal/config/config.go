@@ -17,6 +17,7 @@ type Config struct {
 	DBPassword string
 	DBName     string
 	DBSSLMode  string
+	LogLevel   string
 }
 
 func LoadConfig(path string) *Config {
@@ -34,6 +35,7 @@ func LoadConfig(path string) *Config {
 		DBPassword: os.Getenv("DB_PASSWORD"),
 		DBName:     os.Getenv("DB_NAME"),
 		DBSSLMode:  os.Getenv("DB_SSLMODE"),
+		LogLevel:   os.Getenv("LOG_LEVEL"),
 	}
 }
 
