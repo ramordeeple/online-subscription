@@ -5,10 +5,10 @@ POST {{host}}/subscriptions
 Content-Type: application/json
 
 {
-  "service_name": "AmazonTV+",
-  "price": 900,
+  "service_name": "YouTube Premium",
+  "monthly_price": 500,
   "user_id": "54639c13-710c-48f1-80b0-d18e88a6e9f5",
-  "start_date": "09-2029"
+  "start_date": "09-2025"
 }
 
 ### Cоздание записи о бессрочной подписке у пользователя по user_id (user_id UUID взял условный):
@@ -16,17 +16,18 @@ POST {{host}}/subscriptions
 Content-Type: application/json
 
 {
-"service_name": "AmazonTV+",
-"price": 900,
-"user_id": "54639c13-710c-48f1-80b0-d18e88a6e9f5",
-"start_date": "09-2029"
+  "service_name": "AmazonTV+",
+  "monthly_price": 500,
+  "user_id": "54639c13-710c-48f1-80b0-d18e88a6e9f5",
+  "start_date": "09-2029",
+  "end_date": "07-2030"
 }
 
 ### Получить все подписки
 GET {{host}}/subscriptions
 
 ### Суммарной стоимость всех подписок за выбранный период с фильтрацией по id пользователя и названию подписки
-GET {{host}}/subscriptions/summary?from=09-2024&to=06-2035&user_id=54639c13-710c-48f1-80b0-d18e88a6e9f5&service_name=AmazonTV+
+GET {{host}}/subscriptions/summary?from=09-2029&to=01-2030&user_id=54639c13-710c-48f1-80b0-d18e88a6e9f5&service_name=AmazonTV+
 
 ### Сумма всех подписок c 07.2028 по 06.2030
 GET {{host}}/subscriptions/summary?from=07-2028&to=06-2030
