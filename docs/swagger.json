@@ -293,7 +293,7 @@
                 "end_date": {
                     "type": "string"
                 },
-                "price": {
+                "monthly_price": {
                     "type": "integer"
                 },
                 "service_name": {
@@ -313,7 +313,7 @@
                 "end_date": {
                     "type": "string"
                 },
-                "price": {
+                "monthly_price": {
                     "type": "integer"
                 },
                 "service_name": {

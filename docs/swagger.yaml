@@ -4,7 +4,7 @@ definitions:
     properties:
       end_date:
         type: string
-      price:
+      monthly_price:
         type: integer
       service_name:
         type: string
@@ -17,7 +17,7 @@ definitions:
     properties:
       end_date:
         type: string
-      price:
+      monthly_price:
         type: integer
       service_name:
         type: string

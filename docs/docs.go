@@ -300,7 +300,7 @@ const docTemplate = `{
                 "end_date": {
                     "type": "string"
                 },
-                "price": {
+                "monthly_price": {
                     "type": "integer"
                 },
                 "service_name": {
@@ -320,7 +320,7 @@ const docTemplate = `{
                 "end_date": {
                     "type": "string"
                 },
-                "price": {
+                "monthly_price": {
                     "type": "integer"
                 },
                 "service_name": {
