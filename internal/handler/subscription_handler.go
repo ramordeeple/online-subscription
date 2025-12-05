@@ -10,6 +10,7 @@ import (
 	"online-subscription/internal/logger"
 	"online-subscription/internal/model"
 	"online-subscription/internal/usecase"
+	"strconv"
 	"strings"
 	"time"
 
@@ -74,9 +75,30 @@ func (h *SubscriptionHandler) Create(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string
 // @Router /subscriptions [get]
 func (h *SubscriptionHandler) List(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+
 	f := model.SubscriptionFilter{
-		UserID:      helpers.PtrString(r.URL.Query().Get("user_id")),
-		ServiceName: helpers.PtrString(r.URL.Query().Get("service_name")),
+		UserID:      helpers.PtrString(q.Get("user_id")),
+		ServiceName: helpers.PtrString(q.Get("service_name")),
+	}
+
+	// parse limit
+	if limitStr := q.Get("limit"); limitStr != "" {
+		limit, err := strconv.Atoi(limitStr)
+		if err != nil || limit < 0 {
+			http.Error(w, "invalid limit", http.StatusBadRequest)
+			return
+		}
+		f.Limit = &limit
+	}
+
+	if offsetStr := q.Get("offset"); offsetStr != "" {
+		offset, err := strconv.Atoi(offsetStr)
+		if err != nil || offset < 0 {
+			http.Error(w, "invalid offset", http.StatusBadRequest)
+			return
+		}
+		f.Offset = &offset
 	}
 
 	subs, err := h.uc.List(r.Context(), &f)
@@ -85,7 +107,10 @@ func (h *SubscriptionHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	logger.Info("Subscriptions listed", zap.Int("count", len(subs)))
+	logger.Info("Subscriptions listed",
+		zap.Int("count", len(subs)),
+	)
+
 	helpers.WriteJSON(w, http.StatusOK, subs)
 }
 
