@@ -146,7 +146,7 @@ Content-Type: application/json
 
 {
   "service_name": "Netflix",
-  "price": 999,
+  "monthly_price": 999,
   "start_date": "12-2025",
   "user_id": "54639c13-710c-48f1-80b0-d18e88a6e9f5"
 }
@@ -172,7 +172,7 @@ Content-Type: application/json
 
 {
   "service_name": "Spotify",
-  "price": 1200,
+  "monthly_price": 1200,
   "start_date": "01-2026"
 }
 ```
@@ -189,5 +189,5 @@ DELETE http://localhost:8080/subscriptions/{id}
 GET http://localhost:8080/subscriptions/summary?from=01-2025&user_id=54639c13-710c-48f1-80b0-d18e88a6e9f5&service_name=Netflix
 ```
 
-> 💡 В `requests/request.http` есть уже готовые примеры для CRUDL запросов. 
+> 💡 Больше готовых примеров запросов есть в `requests/request.http`. 
 
