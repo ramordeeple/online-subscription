@@ -3,12 +3,12 @@ package model
 import "time"
 
 type Subscription struct {
-	ID          string     `json:"id"`
-	ServiceName string     `json:"service_name"`
-	Price       int        `json:"monthly_price"`
-	UserID      string     `json:"user_id"`
-	StartDate   time.Time  `json:"start_date"`
-	EndDate     *time.Time `json:"end_date"`
+	ID          string     `db:"id"`
+	ServiceName string     `db:"service_name"`
+	Price       int        `db:"monthly_price"`
+	UserID      string     `db:"user_id"`
+	StartDate   time.Time  `db:"start_date"`
+	EndDate     *time.Time `db:"end_date"`
 }
 
 type SubscriptionFilter struct {

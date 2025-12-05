@@ -8,7 +8,8 @@ Content-Type: application/json
   "service_name": "YouTube Premium",
   "monthly_price": 500,
   "user_id": "54639c13-710c-48f1-80b0-d18e88a6e9f5",
-  "start_date": "09-2025"
+  "start_date": "09-2025",
+  "end_date": "07-2030"
 }
 
 ### Cоздание записи о бессрочной подписке у пользователя по user_id (user_id UUID взял условный):
@@ -19,8 +20,7 @@ Content-Type: application/json
   "service_name": "AmazonTV+",
   "monthly_price": 500,
   "user_id": "54639c13-710c-48f1-80b0-d18e88a6e9f5",
-  "start_date": "09-2029",
-  "end_date": "07-2030"
+  "start_date": "09-2029"
 }
 
 ### Получить все подписки
@@ -31,9 +31,6 @@ GET {{host}}/subscriptions/summary?from=09-2029&to=01-2030&user_id=54639c13-710c
 
 ### Сумма всех подписок c 07.2028 по 06.2030
 GET {{host}}/subscriptions/summary?from=07-2028&to=06-2030
-
-### Сумма всех подписок c 07.2025
-GET {{host}}/subscriptions/summary?from=07-2025
 
 ### LIMIT
 GET http://localhost:8080/subscriptions?limit=2

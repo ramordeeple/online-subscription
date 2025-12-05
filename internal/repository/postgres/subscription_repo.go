@@ -4,18 +4,16 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"online-subscription/internal/model"
-	"online-subscription/internal/repository"
 
-	_ "github.com/lib/pq"
+	"github.com/jmoiron/sqlx"
 )
 
 type SubscriptionRepo struct {
-	db *sql.DB
+	db *sqlx.DB
 }
 
-func NewSubscriptionRepo(db *sql.DB) *SubscriptionRepo {
+func NewSubscriptionRepo(db *sqlx.DB) *SubscriptionRepo {
 	return &SubscriptionRepo{db: db}
 }
 
@@ -23,75 +21,93 @@ func (r *SubscriptionRepo) Create(ctx context.Context, s *model.Subscription) er
 	query := `
 	INSERT INTO subscriptions (
 		id, service_name, monthly_price, user_id, start_date, end_date
-	) VALUES ($1,$2,$3,$4,$5,$6)
-	`
-	_, err := r.db.ExecContext(ctx, query,
-		s.ID, s.ServiceName, s.Price, s.UserID, s.StartDate, s.EndDate,
+	) VALUES (
+		:id, :service_name, :monthly_price, :user_id, :start_date, :end_date
 	)
+	`
+	_, err := r.db.NamedExecContext(ctx, query, s)
 	return err
 }
 
 func (r *SubscriptionRepo) Get(ctx context.Context, id string) (*model.Subscription, error) {
-	query := `
+	var s model.Subscription
+	err := r.db.GetContext(ctx, &s, `
 	SELECT id, service_name, monthly_price, user_id, start_date, end_date
 	FROM subscriptions
-	WHERE id=$1
-	`
-	row := r.db.QueryRowContext(ctx, query, id)
+	WHERE id = $1
+	`, id)
 
-	var s model.Subscription
-	var end sql.NullTime
-	err := row.Scan(
-		&s.ID, &s.ServiceName, &s.Price, &s.UserID,
-		&s.StartDate, &end,
-	)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
 		return nil, err
 	}
-
-	if end.Valid {
-		s.EndDate = &end.Time
-	}
-
 	return &s, nil
 }
 
 func (r *SubscriptionRepo) Update(ctx context.Context, s *model.Subscription) error {
 	query := `
 	UPDATE subscriptions
-	SET service_name=$1, monthly_price=$2, user_id=$3, start_date=$4, end_date=$5
-	WHERE id=$6
+	SET service_name=:service_name, monthly_price=:monthly_price, user_id=:user_id,
+	    start_date=:start_date, end_date=:end_date
+	WHERE id=:id
 	`
-	res, err := r.db.ExecContext(ctx, query,
-		s.ServiceName, s.Price, s.UserID, s.StartDate, s.EndDate, s.ID,
-	)
+	res, err := r.db.NamedExecContext(ctx, query, s)
 	if err != nil {
 		return err
 	}
 
-	ra, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if ra == 0 {
+	rows, _ := res.RowsAffected()
+	if rows == 0 {
 		return sql.ErrNoRows
 	}
-
 	return nil
 }
 
 func (r *SubscriptionRepo) Delete(ctx context.Context, id string) error {
-	_, err := r.db.ExecContext(ctx, `DELETE FROM subscriptions WHERE id=$1`, id)
+	query := `DELETE FROM subscriptions WHERE id=$1`
+	_, err := r.db.ExecContext(ctx, query, id)
 	return err
 }
 
 func (r *SubscriptionRepo) List(ctx context.Context, f *model.SubscriptionFilter) ([]*model.Subscription, error) {
-	query, args := buildSubscriptionListQuery(f)
+	query := `
+	SELECT id, service_name, monthly_price, user_id, start_date, end_date
+	FROM subscriptions
+	WHERE 1=1
+	`
+	args := map[string]interface{}{}
 
-	rows, err := r.db.QueryContext(ctx, query, args...)
+	if f.UserID != nil && *f.UserID != "" {
+		query += " AND user_id = :user_id"
+		args["user_id"] = *f.UserID
+	}
+	if f.ServiceName != nil && *f.ServiceName != "" {
+		query += " AND service_name = :service_name"
+		args["service_name"] = *f.ServiceName
+	}
+	if f.FromDate != nil {
+		query += " AND (end_date IS NULL OR end_date >= :from_date)"
+		args["from_date"] = *f.FromDate
+	}
+	if f.ToDate != nil {
+		query += " AND start_date <= :to_date"
+		args["to_date"] = *f.ToDate
+	}
+
+	query += " ORDER BY start_date DESC"
+
+	if f.Limit != nil {
+		query += " LIMIT :limit"
+		args["limit"] = *f.Limit
+	}
+	if f.Offset != nil {
+		query += " OFFSET :offset"
+		args["offset"] = *f.Offset
+	}
+
+	rows, err := r.db.NamedQueryContext(ctx, query, args)
 	if err != nil {
 		return nil, err
 	}
@@ -99,15 +115,11 @@ func (r *SubscriptionRepo) List(ctx context.Context, f *model.SubscriptionFilter
 
 	var subs []*model.Subscription
 	for rows.Next() {
-		s, err := scanSubscription(rows)
-		if err != nil {
+		var s model.Subscription
+		if err := rows.StructScan(&s); err != nil {
 			return nil, err
 		}
-		subs = append(subs, s)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, err
+		subs = append(subs, &s)
 	}
 
 	return subs, nil
@@ -117,100 +129,38 @@ func (r *SubscriptionRepo) Sum(ctx context.Context, f *model.SummaryFilter) (int
 	query := `
 	SELECT COALESCE(SUM(
 		monthly_price * (
-			(
-				DATE_PART('year', LEAST(COALESCE(end_date, $2), $2)) - DATE_PART('year', GREATEST(start_date, $1))
-			) * 12 +
-			(
-				DATE_PART('month', LEAST(COALESCE(end_date, $2), $2)) - DATE_PART('month', GREATEST(start_date, $1))
-			) + 1
+			(DATE_PART('year', LEAST(COALESCE(end_date, :to_date), :to_date)) - DATE_PART('year', GREATEST(start_date, :from_date))) * 12 +
+			(DATE_PART('month', LEAST(COALESCE(end_date, :to_date), :to_date)) - DATE_PART('month', GREATEST(start_date, :from_date))) + 1
 		)
 	), 0)
 	FROM subscriptions
-	WHERE start_date <= $2 AND (end_date IS NULL OR end_date >= $1)
+	WHERE start_date <= :to_date AND (end_date IS NULL OR end_date >= :from_date)
 	`
 
-	args := []any{f.FromDate, f.ToDate}
-	i := 3
+	args := map[string]interface{}{
+		"from_date": f.FromDate,
+		"to_date":   f.ToDate,
+	}
 
 	if f.UserID != nil && *f.UserID != "" {
-		query += fmt.Sprintf(" AND user_id = $%d", i)
-		args = append(args, *f.UserID)
-		i++
+		query += " AND user_id = :user_id"
+		args["user_id"] = *f.UserID
+	}
+	if f.ServiceName != nil && *f.ServiceName != "" {
+		query += " AND service_name = :service_name"
+		args["service_name"] = *f.ServiceName
 	}
 
-	if f.ServiceName != nil && *f.ServiceName != "" {
-		query += fmt.Sprintf(" AND service_name = $%d", i)
-		args = append(args, *f.ServiceName)
-		i++
+	nstmt, err := r.db.PrepareNamedContext(ctx, query)
+	if err != nil {
+		return 0, err
 	}
+	defer nstmt.Close()
 
 	var sum int
-	if err := r.db.QueryRowContext(ctx, query, args...).Scan(&sum); err != nil {
+	if err := nstmt.GetContext(ctx, &sum, args); err != nil {
 		return 0, err
 	}
 
 	return sum, nil
-}
-
-func buildSubscriptionListQuery(f *model.SubscriptionFilter) (string, []any) {
-	query := `
-		SELECT id, service_name, monthly_price, user_id, start_date, end_date
-		FROM subscriptions
-		WHERE 1=1
-	`
-	args := []any{}
-	i := 1
-
-	if f.UserID != nil && *f.UserID != "" {
-		query += fmt.Sprintf(" AND user_id = $%d", i)
-		args = append(args, *f.UserID)
-		i++
-	}
-
-	if f.ServiceName != nil && *f.ServiceName != "" {
-		query += fmt.Sprintf(" AND service_name = $%d", i)
-		args = append(args, *f.ServiceName)
-		i++
-	}
-
-	if f.FromDate != nil {
-		query += fmt.Sprintf(" AND (end_date IS NULL OR end_date >= $%d)", i)
-		args = append(args, *f.FromDate)
-		i++
-	}
-	if f.ToDate != nil {
-		query += fmt.Sprintf(" AND start_date <= $%d", i)
-		args = append(args, *f.ToDate)
-		i++
-	}
-
-	query += " ORDER BY start_date DESC"
-
-	if f.Limit != nil {
-		query += fmt.Sprintf(" LIMIT $%d", i)
-		args = append(args, *f.Limit)
-		i++
-	}
-	if f.Offset != nil {
-		query += fmt.Sprintf(" OFFSET $%d", i)
-		args = append(args, *f.Offset)
-		i++
-	}
-
-	return query, args
-}
-
-func scanSubscription(row repository.Scanner) (*model.Subscription, error) {
-	var s model.Subscription
-	var end sql.NullTime
-
-	if err := row.Scan(&s.ID, &s.ServiceName, &s.Price, &s.UserID, &s.StartDate, &end); err != nil {
-		return nil, err
-	}
-
-	if end.Valid {
-		s.EndDate = &end.Time
-	}
-
-	return &s, nil
 }
