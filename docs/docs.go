@@ -334,22 +334,22 @@ const docTemplate = `{
         "model.Subscription": {
             "type": "object",
             "properties": {
-                "end_date": {
+                "endDate": {
                     "type": "string"
                 },
                 "id": {
                     "type": "string"
                 },
-                "monthly_price": {
+                "price": {
                     "type": "integer"
                 },
-                "service_name": {
+                "serviceName": {
                     "type": "string"
                 },
-                "start_date": {
+                "startDate": {
                     "type": "string"
                 },
-                "user_id": {
+                "userID": {
                     "type": "string"
                 }
             }
