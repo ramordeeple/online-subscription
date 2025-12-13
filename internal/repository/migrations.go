@@ -1,8 +1,8 @@
 package repository
 
 import (
+	"fmt"
 	"online-subscription/internal/logger"
-	"os"
 	"time"
 
 	"github.com/golang-migrate/migrate/v4"
@@ -16,7 +16,7 @@ func RunMigrations(db *sqlx.DB, migrationsPath string) error {
 	driver, err := postgres.WithInstance(db.DB, &postgres.Config{})
 	if err != nil {
 		logger.Error("failed to create migration driver", zap.Error(err))
-		os.Exit(1)
+		return fmt.Errorf("failed to create migration driver: %w", err)
 	}
 
 	m, err := migrate.NewWithDatabaseInstance(
