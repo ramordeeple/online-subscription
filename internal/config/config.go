@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 
@@ -10,22 +9,41 @@ import (
 )
 
 type Config struct {
-	AppPort    string
-	DBHost     string
-	DBPort     int
-	DBUser     string
-	DBPassword string
-	DBName     string
-	DBSSLMode  string
-	LogLevel   string
+	AppPort        string
+	DBHost         string
+	DBPort         int
+	DBUser         string
+	DBPassword     string
+	DBName         string
+	DBSSLMode      string
+	LogLevel       string
+	MigrationsPath string
 }
 
-func LoadConfig(path string) *Config {
-	if err := godotenv.Load(path); err != nil {
-		log.Printf("Warning: no .env file found at %s", path)
+func Load(path string) (*Config, error) {
+	_ = godotenv.Load(path) // .env is optional when vars are already set in environment
+
+	required := []string{"APP_PORT", "DB_HOST", "DB_PORT", "DB_USER", "DB_PASSWORD", "DB_NAME"}
+	for _, key := range required {
+		if os.Getenv(key) == "" {
+			return nil, fmt.Errorf("required env var %s is not set", key)
+		}
 	}
 
-	dbPort, _ := strconv.Atoi(os.Getenv("DB_PORT"))
+	dbPort, err := strconv.Atoi(os.Getenv("DB_PORT"))
+	if err != nil {
+		return nil, fmt.Errorf("DB_PORT must be a valid integer: %w", err)
+	}
+
+	sslMode := os.Getenv("DB_SSLMODE")
+	if sslMode == "" {
+		sslMode = "disable"
+	}
+
+	logLevel := os.Getenv("LOG_LEVEL")
+	if logLevel == "" {
+		logLevel = "info"
+	}
 
 	return &Config{
 		AppPort:    os.Getenv("APP_PORT"),
@@ -34,9 +52,9 @@ func LoadConfig(path string) *Config {
 		DBUser:     os.Getenv("DB_USER"),
 		DBPassword: os.Getenv("DB_PASSWORD"),
 		DBName:     os.Getenv("DB_NAME"),
-		DBSSLMode:  os.Getenv("DB_SSLMODE"),
-		LogLevel:   os.Getenv("LOG_LEVEL"),
-	}
+		DBSSLMode:  sslMode,
+		LogLevel:   logLevel,
+	}, nil
 }
 
 func (c *Config) DSN() string {

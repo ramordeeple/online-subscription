@@ -2,7 +2,6 @@ package repository
 
 import (
 	"fmt"
-	"online-subscription/internal/logger"
 	"time"
 
 	"github.com/golang-migrate/migrate/v4"
@@ -15,40 +14,36 @@ import (
 func RunMigrations(db *sqlx.DB, migrationsPath string) error {
 	driver, err := postgres.WithInstance(db.DB, &postgres.Config{})
 	if err != nil {
-		logger.Error("failed to create migration driver", zap.Error(err))
 		return fmt.Errorf("failed to create migration driver: %w", err)
 	}
 
-	m, err := migrate.NewWithDatabaseInstance(
-		migrationsPath,
-		"postgres", driver)
+	m, err := migrate.NewWithDatabaseInstance(migrationsPath, "postgres", driver)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create migrator: %w", err)
 	}
 
-	err = m.Up()
-	if err != nil && err != migrate.ErrNoChange {
-		return err
+	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+		return fmt.Errorf("migration failed: %w", err)
 	}
 
 	return nil
 }
 
-func ConnectWithRetry(dsn string, logger *zap.Logger, retries int, delay time.Duration) (*sqlx.DB, error) {
-	var db *sqlx.DB
-	var err error
+func ConnectWithRetry(dsn string, log *zap.Logger, retries int, delay time.Duration) (*sqlx.DB, error) {
+	var (
+		db  *sqlx.DB
+		err error
+	)
 
-	for i := 0; i < retries; i++ {
+	for i := range retries {
 		db, err = sqlx.Open("postgres", dsn)
 		if err == nil {
-			err = db.Ping()
-			if err == nil {
-				logger.Info("Connected to database", zap.Int("attempt", i+1))
+			if err = db.Ping(); err == nil {
+				log.Info("Connected to database", zap.Int("attempt", i+1))
 				return db, nil
 			}
 		}
-
-		logger.Warn("Database not ready, retrying...", zap.Int("attempt", i+1), zap.Error(err))
+		log.Warn("Database not ready, retrying...", zap.Int("attempt", i+1), zap.Error(err))
 		time.Sleep(delay)
 	}
 

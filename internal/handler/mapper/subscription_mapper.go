@@ -6,8 +6,6 @@ import (
 	"online-subscription/internal/handler/helpers"
 	"online-subscription/internal/model"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 func BuildSubscriptionModel(req *dto.CreateSubscriptionRequest) (*model.Subscription, error) {
@@ -22,19 +20,17 @@ func BuildSubscriptionModel(req *dto.CreateSubscriptionRequest) (*model.Subscrip
 		if err != nil {
 			return nil, fmt.Errorf("invalid end_date, expected MM-YYYY")
 		}
+		if t.Before(startDate) {
+			return nil, fmt.Errorf("end_date must be >= start_date")
+		}
 		endDate = &t
 	}
 
-	if endDate != nil && endDate.Before(startDate) {
-		return nil, fmt.Errorf("end_date must be >= start_date")
-	}
-
 	return &model.Subscription{
-		ID:          uuid.New().String(),
-		UserID:      *req.UserID,
-		ServiceName: req.ServiceName,
-		Price:       req.Price,
-		StartDate:   startDate,
-		EndDate:     endDate,
+		UserID:       *req.UserID,
+		ServiceName:  req.ServiceName,
+		MonthlyPrice: req.MonthlyPrice,
+		StartDate:    startDate,
+		EndDate:      endDate,
 	}, nil
 }

@@ -13,14 +13,17 @@ type SubscriptionUseCase struct {
 	repo repository.SubscriptionRepository
 }
 
-func (uc *SubscriptionUseCase) Create(ctx context.Context, input *model.Subscription) error {
-	if input.ServiceName == "" || input.Price <= 0 || input.UserID == "" {
-		return errors.New("invalid input subscription data")
+func NewSubscriptionUseCase(repo repository.SubscriptionRepository) *SubscriptionUseCase {
+	return &SubscriptionUseCase{repo: repo}
+}
+
+func (uc *SubscriptionUseCase) Create(ctx context.Context, sub *model.Subscription) error {
+	if sub.ServiceName == "" || sub.MonthlyPrice <= 0 || sub.UserID == "" {
+		return errors.New("service_name, monthly_price, and user_id are required")
 	}
+	sub.ID = uuid.New().String()
 
-	input.ID = uuid.New().String()
-
-	return uc.repo.Create(ctx, input)
+	return uc.repo.Create(ctx, sub)
 }
 
 func (uc *SubscriptionUseCase) Get(ctx context.Context, id string) (*model.Subscription, error) {
@@ -41,8 +44,4 @@ func (uc *SubscriptionUseCase) List(ctx context.Context, f *model.SubscriptionFi
 
 func (uc *SubscriptionUseCase) Sum(ctx context.Context, f *model.SummaryFilter) (int, error) {
 	return uc.repo.Sum(ctx, f)
-}
-
-func NewSubscriptionUseCase(repo repository.SubscriptionRepository) *SubscriptionUseCase {
-	return &SubscriptionUseCase{repo: repo}
 }

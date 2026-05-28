@@ -2,8 +2,11 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"online-subscription/internal/model"
 )
+
+var ErrNotFound = errors.New("not found")
 
 type SubscriptionRepository interface {
 	Create(ctx context.Context, s *model.Subscription) error
@@ -12,8 +15,4 @@ type SubscriptionRepository interface {
 	Delete(ctx context.Context, id string) error
 	List(ctx context.Context, filter *model.SubscriptionFilter) ([]*model.Subscription, error)
 	Sum(ctx context.Context, filter *model.SummaryFilter) (int, error)
-}
-
-type Scanner interface {
-	Scan(dest ...any) error
 }
