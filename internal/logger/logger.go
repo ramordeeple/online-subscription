@@ -7,15 +7,23 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+type LogLevel string
+
+const (
+	DebugLevel LogLevel = "DEBUG"
+	WarnLevel  LogLevel = "WARN"
+	ErrorLevel LogLevel = "ERROR"
+)
+
 func New(level string) (*zap.Logger, error) {
 	var zapLevel zapcore.Level
 
-	switch strings.ToUpper(level) {
-	case "DEBUG":
+	switch LogLevel(strings.ToUpper(level)) {
+	case DebugLevel:
 		zapLevel = zapcore.DebugLevel
-	case "WARN":
+	case WarnLevel:
 		zapLevel = zapcore.WarnLevel
-	case "ERROR":
+	case ErrorLevel:
 		zapLevel = zapcore.ErrorLevel
 	default:
 		zapLevel = zapcore.InfoLevel
