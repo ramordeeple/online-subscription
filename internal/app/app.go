@@ -19,7 +19,7 @@ type App struct {
 }
 
 func New(cfg *config.Config, log *zap.Logger) (*App, error) {
-	db, err := repository.ConnectWithRetry(cfg.DSN(), log, 10, 2*time.Second)
+	db, err := repository.ConnectWithRetry(cfg.DSN(), log, 5, 2*time.Second)
 	if err != nil {
 		return nil, fmt.Errorf("connect to database: %w", err)
 	}

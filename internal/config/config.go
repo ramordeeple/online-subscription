@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"online-subscription/internal/logger"
 	"os"
 	"strconv"
 
@@ -20,10 +21,22 @@ type Config struct {
 	MigrationsPath string
 }
 
+const (
+	sslModeDisable string = "disable"
+)
+
 func Load(path string) (*Config, error) {
 	_ = godotenv.Load(path) // .env is optional when vars are already set in environment
 
-	required := []string{"APP_PORT", "DB_HOST", "DB_PORT", "DB_USER", "DB_PASSWORD", "DB_NAME"}
+	required := []string{
+		"APP_PORT",
+		"DB_HOST",
+		"DB_PORT",
+		"DB_USER",
+		"DB_PASSWORD",
+		"DB_NAME",
+		"MIGRATIONS_PATH",
+	}
 	for _, key := range required {
 		if os.Getenv(key) == "" {
 			return nil, fmt.Errorf("required env var %s is not set", key)
@@ -37,23 +50,24 @@ func Load(path string) (*Config, error) {
 
 	sslMode := os.Getenv("DB_SSLMODE")
 	if sslMode == "" {
-		sslMode = "disable"
+		sslMode = sslModeDisable
 	}
 
 	logLevel := os.Getenv("LOG_LEVEL")
 	if logLevel == "" {
-		logLevel = "info"
+		logLevel = logger.InfoLevel
 	}
 
 	return &Config{
-		AppPort:    os.Getenv("APP_PORT"),
-		DBHost:     os.Getenv("DB_HOST"),
-		DBPort:     dbPort,
-		DBUser:     os.Getenv("DB_USER"),
-		DBPassword: os.Getenv("DB_PASSWORD"),
-		DBName:     os.Getenv("DB_NAME"),
-		DBSSLMode:  sslMode,
-		LogLevel:   logLevel,
+		AppPort:        os.Getenv("APP_PORT"),
+		DBHost:         os.Getenv("DB_HOST"),
+		DBPort:         dbPort,
+		DBUser:         os.Getenv("DB_USER"),
+		DBPassword:     os.Getenv("DB_PASSWORD"),
+		DBName:         os.Getenv("DB_NAME"),
+		DBSSLMode:      sslMode,
+		LogLevel:       logLevel,
+		MigrationsPath: os.Getenv("MIGRATIONS_PATH"),
 	}, nil
 }
 

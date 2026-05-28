@@ -22,7 +22,7 @@ import (
 func main() {
 	cfg, err := config.Load(".env")
 	if err != nil {
-		panic(err)
+		panic("failed to load config from .env")
 	}
 
 	log, err := logger.New(cfg.LogLevel)

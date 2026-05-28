@@ -20,49 +20,6 @@
 | API Docs        | [Swaggo](https://github.com/swaggo/swag)                                        |
 | Dev Environment | Docker Compose                                                                  |
 
----
-
-## 🗂️ **Структура проекта**
-
-```
-online-subscription/
-├─ cmd/
-│  └─ online-subscription/
-│     └─ main.go                      # Точка входа приложения, запускает сервер
-├─ docs/                              # Документация и Swagger UI
-├─ internal/
-│  ├─ app/
-│  │  ├─ app.go                       # Инициализация сервера и зависимостей
-│  │  └─ router.go                    # Определение HTTP маршрутов
-│  ├─ config/
-│  │  └─ config.go                    # Загрузка конфигурации из .env
-│  ├─ handler/
-│  │  ├─ subscription_handler.go      # Основной CRUDL хэндлер для подписок
-│  │  ├─ dto/
-│  │  │  └─ request.go                # DTO для запросов
-│  │  ├─ helpers/
-│  │  │  └─ helpers.go                # Вспомогательные функции для пакета handler
-│  │  ├─ mapper/
-│  │  │  └─ subscription_mapper.go    # Преобразование данных
-│  │  ├─ parser/
-│  │  │  └─ subscription_parser.go    # Разбор и парсинг данных
-│  │  └─ validator/
-│  │     └─ subscription_validator.go # Валидация бизнес-логики
-│  ├─ logger/
-│  │  └─ logger.go                    # Настройка Zap логирования
-│  ├─ model/
-│  │  └─ subscription.go              # Модели данных (Subscription)
-│  ├─ repository/
-│  │  ├─ postgres/
-│  │  │  └─ subscription_repo.go      # PostgreSQL реализация интерфейса репозитория
-│  │  ├─ migrations.go                # Управление миграциями БД
-│  │  └─ repository.go                # Интерфейс для CRUDL
-│  └─ usecase/
-│     └─ subscription.go              # Бизнес-логика CRUDL подписок
-└─ migrations/                        # Файлы .sql для инициализации базы данных
-
-
-```
 
 ---
 
