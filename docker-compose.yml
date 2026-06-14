@@ -2,7 +2,7 @@ services:
   app:
     build: .
     ports:
-      - "8080:8080"
+      - "${APP_PORT}:8080"
     depends_on:
       - db
     environment:
@@ -18,11 +18,11 @@ services:
   db:
     image: postgres:16
     ports:
-      - "5435:5432"
+      - "${DB_PORT}:5432"
     environment:
-      POSTGRES_USER: subscription
-      POSTGRES_PASSWORD: 123
-      POSTGRES_DB: subscriptions
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     volumes:
       - pgdata:/var/lib/postgresql/data
 
