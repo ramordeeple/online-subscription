@@ -6,8 +6,20 @@ import (
 	"errors"
 	"online-subscription/internal/model"
 
+	sq "github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
 )
+
+var psql = sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+
+var subscriptionColumns = []string{
+	"id",
+	"service_name",
+	"monthly_price",
+	"user_id",
+	"start_date",
+	"end_date",
+}
 
 type SubscriptionRepo struct {
 	db *sqlx.DB
@@ -18,25 +30,31 @@ func NewSubscriptionRepo(db *sqlx.DB) *SubscriptionRepo {
 }
 
 func (r *SubscriptionRepo) Create(ctx context.Context, s *model.Subscription) error {
-	query := `
-	INSERT INTO subscriptions (
-		id, service_name, monthly_price, user_id, start_date, end_date
-	) VALUES (
-		:id, :service_name, :monthly_price, :user_id, :start_date, :end_date
-	)
-	`
-	_, err := r.db.NamedExecContext(ctx, query, s)
+	query, args, err := psql.
+		Insert("subscriptions").
+		Columns(subscriptionColumns...).
+		Values(s.ID, s.ServiceName, s.Price, s.UserID, s.StartDate, s.EndDate).
+		ToSql()
+	if err != nil {
+		return err
+	}
+
+	_, err = r.db.ExecContext(ctx, query, args...)
 	return err
 }
 
 func (r *SubscriptionRepo) Get(ctx context.Context, id string) (*model.Subscription, error) {
-	var s model.Subscription
-	err := r.db.GetContext(ctx, &s, `
-	SELECT id, service_name, monthly_price, user_id, start_date, end_date
-	FROM subscriptions
-	WHERE id = $1
-	`, id)
+	query, args, err := psql.
+		Select(subscriptionColumns...).
+		From("subscriptions").
+		Where(sq.Eq{"id": id}).
+		ToSql()
+	if err != nil {
+		return nil, err
+	}
 
+	var s model.Subscription
+	err = r.db.GetContext(ctx, &s, query, args...)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -47,18 +65,28 @@ func (r *SubscriptionRepo) Get(ctx context.Context, id string) (*model.Subscript
 }
 
 func (r *SubscriptionRepo) Update(ctx context.Context, s *model.Subscription) error {
-	query := `
-	UPDATE subscriptions
-	SET service_name=:service_name, monthly_price=:monthly_price, user_id=:user_id,
-	    start_date=:start_date, end_date=:end_date
-	WHERE id=:id
-	`
-	res, err := r.db.NamedExecContext(ctx, query, s)
+	query, args, err := psql.
+		Update("subscriptions").
+		Set("service_name", s.ServiceName).
+		Set("monthly_price", s.Price).
+		Set("user_id", s.UserID).
+		Set("start_date", s.StartDate).
+		Set("end_date", s.EndDate).
+		Where(sq.Eq{"id": s.ID}).
+		ToSql()
 	if err != nil {
 		return err
 	}
 
-	rows, _ := res.RowsAffected()
+	res, err := r.db.ExecContext(ctx, query, args...)
+	if err != nil {
+		return err
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
 	if rows == 0 {
 		return sql.ErrNoRows
 	}
@@ -66,48 +94,54 @@ func (r *SubscriptionRepo) Update(ctx context.Context, s *model.Subscription) er
 }
 
 func (r *SubscriptionRepo) Delete(ctx context.Context, id string) error {
-	query := `DELETE FROM subscriptions WHERE id=$1`
-	_, err := r.db.ExecContext(ctx, query, id)
+	query, args, err := psql.
+		Delete("subscriptions").
+		Where(sq.Eq{"id": id}).
+		ToSql()
+	if err != nil {
+		return err
+	}
+
+	_, err = r.db.ExecContext(ctx, query, args...)
 	return err
 }
 
 func (r *SubscriptionRepo) List(ctx context.Context, f *model.SubscriptionFilter) ([]*model.Subscription, error) {
-	query := `
-	SELECT id, service_name, monthly_price, user_id, start_date, end_date
-	FROM subscriptions
-	WHERE 1=1
-	`
-	args := map[string]interface{}{}
+	builder := psql.
+		Select(subscriptionColumns...).
+		From("subscriptions")
 
 	if f.UserID != nil && *f.UserID != "" {
-		query += " AND user_id = :user_id"
-		args["user_id"] = *f.UserID
+		builder = builder.Where(sq.Eq{"user_id": *f.UserID})
 	}
 	if f.ServiceName != nil && *f.ServiceName != "" {
-		query += " AND service_name = :service_name"
-		args["service_name"] = *f.ServiceName
+		builder = builder.Where(sq.Eq{"service_name": *f.ServiceName})
 	}
 	if f.FromDate != nil {
-		query += " AND (end_date IS NULL OR end_date >= :from_date)"
-		args["from_date"] = *f.FromDate
+		builder = builder.Where(sq.Or{
+			sq.Expr("end_date IS NULL"),
+			sq.GtOrEq{"end_date": *f.FromDate},
+		})
 	}
 	if f.ToDate != nil {
-		query += " AND start_date <= :to_date"
-		args["to_date"] = *f.ToDate
+		builder = builder.Where(sq.LtOrEq{"start_date": *f.ToDate})
 	}
 
-	query += " ORDER BY start_date DESC"
+	builder = builder.OrderBy("start_date DESC")
 
 	if f.Limit != nil {
-		query += " LIMIT :limit"
-		args["limit"] = *f.Limit
+		builder = builder.Limit(uint64(*f.Limit))
 	}
 	if f.Offset != nil {
-		query += " OFFSET :offset"
-		args["offset"] = *f.Offset
+		builder = builder.Offset(uint64(*f.Offset))
 	}
 
-	rows, err := r.db.NamedQueryContext(ctx, query, args)
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := r.db.QueryxContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -122,43 +156,44 @@ func (r *SubscriptionRepo) List(ctx context.Context, f *model.SubscriptionFilter
 		subs = append(subs, &s)
 	}
 
-	return subs, nil
+	return subs, rows.Err()
 }
 
 func (r *SubscriptionRepo) Sum(ctx context.Context, f *model.SummaryFilter) (int, error) {
-	query := `
-	SELECT COALESCE(SUM(
+	const sumExpression = `COALESCE(SUM(
 		monthly_price * (
-			(DATE_PART('year', LEAST(COALESCE(end_date, :to_date), :to_date)) - DATE_PART('year', GREATEST(start_date, :from_date))) * 12 +
-			(DATE_PART('month', LEAST(COALESCE(end_date, :to_date), :to_date)) - DATE_PART('month', GREATEST(start_date, :from_date))) + 1
+			(DATE_PART('year', LEAST(COALESCE(end_date, ?), ?)) - DATE_PART('year', GREATEST(start_date, ?))) * 12 +
+			(DATE_PART('month', LEAST(COALESCE(end_date, ?), ?)) - DATE_PART('month', GREATEST(start_date, ?))) + 1
 		)
-	), 0)
-	FROM subscriptions
-	WHERE start_date <= :to_date AND (end_date IS NULL OR end_date >= :from_date)
-	`
+	), 0)`
 
-	args := map[string]interface{}{
-		"from_date": f.FromDate,
-		"to_date":   f.ToDate,
-	}
+	builder := psql.
+		Select().
+		Column(sumExpression,
+			f.ToDate, f.ToDate, f.FromDate,
+			f.ToDate, f.ToDate, f.FromDate,
+		).
+		From("subscriptions").
+		Where(sq.LtOrEq{"start_date": f.ToDate}).
+		Where(sq.Or{
+			sq.Expr("end_date IS NULL"),
+			sq.GtOrEq{"end_date": f.FromDate},
+		})
 
 	if f.UserID != nil && *f.UserID != "" {
-		query += " AND user_id = :user_id"
-		args["user_id"] = *f.UserID
+		builder = builder.Where(sq.Eq{"user_id": *f.UserID})
 	}
 	if f.ServiceName != nil && *f.ServiceName != "" {
-		query += " AND service_name = :service_name"
-		args["service_name"] = *f.ServiceName
+		builder = builder.Where(sq.Eq{"service_name": *f.ServiceName})
 	}
 
-	nstmt, err := r.db.PrepareNamedContext(ctx, query)
+	query, args, err := builder.ToSql()
 	if err != nil {
 		return 0, err
 	}
-	defer nstmt.Close()
 
 	var sum int
-	if err := nstmt.GetContext(ctx, &sum, args); err != nil {
+	if err := r.db.GetContext(ctx, &sum, query, args...); err != nil {
 		return 0, err
 	}
 
