@@ -1,7 +1,7 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "Агреграция данных об онлайн-подписках пользователей",
+        "description": "Data aggregation of users' online-subscriptions",
         "title": "Online Subscriptions API service",
         "contact": {},
         "version": "1.0"

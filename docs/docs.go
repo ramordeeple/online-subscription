@@ -364,7 +364,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "Online Subscriptions API service",
-	Description:      "Агреграция данных об онлайн-подписках пользователей",
+	Description:      "Data aggregation of users' online-subscriptions",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",
