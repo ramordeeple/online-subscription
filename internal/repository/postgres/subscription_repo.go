@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"online-subscription/internal/model"
 
 	sq "github.com/Masterminds/squirrel"
@@ -53,15 +54,15 @@ func (r *SubscriptionRepo) Get(ctx context.Context, id string) (*model.Subscript
 		return nil, err
 	}
 
-	var s model.Subscription
-	err = r.db.GetContext(ctx, &s, query, args...)
+	var subscription model.Subscription
+	err = r.db.GetContext(ctx, &subscription, query, args...)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
 		return nil, err
 	}
-	return &s, nil
+	return &subscription, nil
 }
 
 func (r *SubscriptionRepo) Update(ctx context.Context, s *model.Subscription) error {
@@ -106,57 +107,21 @@ func (r *SubscriptionRepo) Delete(ctx context.Context, id string) error {
 	return err
 }
 
-func (r *SubscriptionRepo) List(ctx context.Context, f *model.SubscriptionFilter) ([]*model.Subscription, error) {
-	builder := psql.
-		Select(subscriptionColumns...).
-		From("subscriptions")
-
-	if f.UserID != nil && *f.UserID != "" {
-		builder = builder.Where(sq.Eq{"user_id": *f.UserID})
-	}
-	if f.ServiceName != nil && *f.ServiceName != "" {
-		builder = builder.Where(sq.Eq{"service_name": *f.ServiceName})
-	}
-	if f.FromDate != nil {
-		builder = builder.Where(sq.Or{
-			sq.Expr("end_date IS NULL"),
-			sq.GtOrEq{"end_date": *f.FromDate},
-		})
-	}
-	if f.ToDate != nil {
-		builder = builder.Where(sq.LtOrEq{"start_date": *f.ToDate})
-	}
-
-	builder = builder.OrderBy("start_date DESC")
-
-	if f.Limit != nil {
-		builder = builder.Limit(uint64(*f.Limit))
-	}
-	if f.Offset != nil {
-		builder = builder.Offset(uint64(*f.Offset))
-	}
-
-	query, args, err := builder.ToSql()
+func (r *SubscriptionRepo) List(
+	ctx context.Context,
+	f *model.SubscriptionFilter,
+) ([]*model.Subscription, error) {
+	query, args, err := buildSubscriptionListQuery(f)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("build subscription list query: %w", err)
 	}
 
-	rows, err := r.db.QueryxContext(ctx, query, args...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var subs []*model.Subscription
-	for rows.Next() {
-		var s model.Subscription
-		if err := rows.StructScan(&s); err != nil {
-			return nil, err
-		}
-		subs = append(subs, &s)
+	subscriptions := make([]*model.Subscription, 0)
+	if err := r.db.SelectContext(ctx, &subscriptions, query, args...); err != nil {
+		return nil, fmt.Errorf("select subscriptions: %w", err)
 	}
 
-	return subs, rows.Err()
+	return subscriptions, nil
 }
 
 func (r *SubscriptionRepo) Sum(ctx context.Context, f *model.SummaryFilter) (int, error) {
@@ -198,4 +163,54 @@ func (r *SubscriptionRepo) Sum(ctx context.Context, f *model.SummaryFilter) (int
 	}
 
 	return sum, nil
+}
+
+func buildSubscriptionListQuery(
+	f *model.SubscriptionFilter,
+) (string, []any, error) {
+	builder := psql.
+		Select(subscriptionColumns...).
+		From("subscriptions").
+		OrderBy("start_date DESC")
+
+	if f == nil {
+		return builder.ToSql()
+	}
+
+	if f.UserID != nil && *f.UserID != "" {
+		builder = builder.Where(sq.Eq{"user_id": *f.UserID})
+	}
+
+	if f.ServiceName != nil && *f.ServiceName != "" {
+		builder = builder.Where(sq.Eq{"service_name": *f.ServiceName})
+	}
+
+	if f.FromDate != nil {
+		builder = builder.Where(sq.Or{
+			sq.Expr("end_date IS NULL"),
+			sq.GtOrEq{"end_date": *f.FromDate},
+		})
+	}
+
+	if f.ToDate != nil {
+		builder = builder.Where(sq.LtOrEq{
+			"start_date": *f.ToDate,
+		})
+	}
+
+	if f.Limit != nil {
+		if *f.Limit < 0 {
+			return "", nil, fmt.Errorf("limit must be non-negative")
+		}
+		builder = builder.Limit(uint64(*f.Limit))
+	}
+
+	if f.Offset != nil {
+		if *f.Offset < 0 {
+			return "", nil, fmt.Errorf("offset must be non-negative")
+		}
+		builder = builder.Offset(uint64(*f.Offset))
+	}
+
+	return builder.ToSql()
 }
